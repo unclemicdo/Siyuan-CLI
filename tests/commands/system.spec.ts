@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AxiosResponse } from "axios";
+import { spawnSync } from "node:child_process";
 import {
   createHttpClient,
   formatFailure,
@@ -8,6 +9,7 @@ import {
   SiyuanCliError,
   resolveConfig
 } from "../../src/core/index.js";
+import { createCli } from "../../src/cli.js";
 
 describe("core contracts", () => {
   it("resolves config with explicit values taking priority", () => {
@@ -250,5 +252,270 @@ describe("siyuan client", () => {
         axios_code: "ECONNABORTED"
       }
     });
+  });
+});
+
+describe("system command", () => {
+  it("registers system version with --json support", () => {
+    const cli = createCli();
+    const system = cli.commands.find((command) => command.name() === "system");
+    const version = system?.commands.find((command) => command.name() === "version");
+    const hasJson = version?.options.some((option) => option.long === "--json");
+
+    expect(system).toBeDefined();
+    expect(version).toBeDefined();
+    expect(hasJson).toBe(true);
+  });
+
+  it("writes structured JSON for system version", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const version = vi.fn(async () => ({ version: "3.1.0" }));
+    const cli = createCli({
+      systemApi: {
+        version,
+        bootProgress: async () => ({ bootProgress: 100 }),
+        time: async () => ({ time: 1712059200000 })
+      }
+    });
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "system", "version", "--json"]);
+
+    expect(version).toHaveBeenCalledTimes(1);
+    expect(write).toHaveBeenCalled();
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload.ok).toBe(true);
+    expect(payload.command).toBe("system.version");
+    expect(payload.data).toEqual({ version: "3.1.0" });
+    expect(payload.meta).toEqual(expect.objectContaining({ duration_ms: expect.any(Number) }));
+
+    write.mockRestore();
+  });
+
+  it("registers and executes system boot-progress and system time", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const bootProgress = vi.fn(async () => ({ progress: 42 }));
+    const time = vi.fn(async () => ({ now: 1712059200000 }));
+    const cli = createCli({
+      systemApi: {
+        version: async () => ({ version: "3.1.0" }),
+        bootProgress,
+        time
+      }
+    });
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "system", "boot-progress", "--json"]);
+    await cli.parseAsync(["node", "sy", "system", "time", "--json"]);
+
+    expect(bootProgress).toHaveBeenCalledTimes(1);
+    expect(time).toHaveBeenCalledTimes(1);
+
+    write.mockRestore();
+  });
+
+  it("uses an injected class instance for systemApi methods", async () => {
+    class InstanceSystemApi {
+      public calls = 0;
+
+      async version() {
+        this.calls += 1;
+        return { version: "instance-3.2.0" };
+      }
+
+      async bootProgress() {
+        return { progress: 11 };
+      }
+
+      async time() {
+        return { now: 1712059200000 };
+      }
+    }
+
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const systemApi = new InstanceSystemApi();
+    const cli = createCli({ systemApi });
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "system", "version", "--json"]);
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload.data).toEqual({ version: "instance-3.2.0" });
+    expect(systemApi.calls).toBe(1);
+
+    write.mockRestore();
+  });
+
+  it("preserves method receiver for injected systemApi methods", async () => {
+    class ReceiverBoundSystemApi {
+      constructor(private readonly prefix: string) {}
+
+      async version() {
+        return { version: `${this.prefix}-ok` };
+      }
+
+      async bootProgress() {
+        return { progress: `${this.prefix}-progress` };
+      }
+
+      async time() {
+        return { now: `${this.prefix}-time` };
+      }
+    }
+
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const cli = createCli({
+      systemApi: new ReceiverBoundSystemApi("bound")
+    });
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "system", "boot-progress", "--json"]);
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload.data).toEqual({ progress: "bound-progress" });
+
+    write.mockRestore();
+  });
+
+  it("writes structured failure output in --json mode", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const previousExitCode = process.exitCode;
+    process.exitCode = undefined;
+    const cli = createCli({
+      systemApi: {
+        version: async () => {
+          throw new SiyuanCliError("API_NETWORK_ERROR", "network down", {
+            endpoint: "/api/system/version"
+          });
+        },
+        bootProgress: async () => ({ progress: 100 }),
+        time: async () => ({ now: 1712059200000 })
+      }
+    });
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "system", "version", "--json"]);
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload).toEqual(
+      expect.objectContaining({
+        ok: false,
+        command: "system.version",
+        error: expect.objectContaining({
+          code: "API_NETWORK_ERROR",
+          message: "network down",
+          details: { endpoint: "/api/system/version" }
+        })
+      })
+    );
+    expect(process.exitCode).toBe(1);
+
+    process.exitCode = previousExitCode;
+    write.mockRestore();
+  });
+
+  it("does not return fake mock success by default for system version", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const priorToken = process.env.SIYUAN_TOKEN;
+    delete process.env.SIYUAN_TOKEN;
+    const cli = createCli();
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "system", "version", "--json"]);
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload.ok).toBe(false);
+    expect(payload.command).toBe("system.version");
+    expect(payload.error.code).toBe("CONFIG_MISSING_TOKEN");
+    expect(payload.data).toBeUndefined();
+
+    if (priorToken === undefined) {
+      delete process.env.SIYUAN_TOKEN;
+    } else {
+      process.env.SIYUAN_TOKEN = priorToken;
+    }
+    write.mockRestore();
+  });
+
+  it("writes structured failure output for unexpected errors in --json mode", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const previousExitCode = process.exitCode;
+    process.exitCode = undefined;
+    const cli = createCli({
+      systemApi: {
+        version: async () => {
+          throw new Error("boom");
+        },
+        bootProgress: async () => ({ progress: 100 }),
+        time: async () => ({ now: 1712059200000 })
+      }
+    });
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "system", "version", "--json"]);
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload.ok).toBe(false);
+    expect(payload.command).toBe("system.version");
+    expect(payload.error.code).toBe("INTERNAL_ERROR");
+    expect(payload.error.message).toBe("boom");
+    expect(process.exitCode).toBe(1);
+
+    process.exitCode = previousExitCode;
+    write.mockRestore();
+  });
+
+  it("uses CLI-path command id for boot-progress JSON output", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const cli = createCli({
+      systemApi: {
+        version: async () => ({ version: "3.1.0" }),
+        bootProgress: async () => ({ progress: 42 }),
+        time: async () => ({ now: 1712059200000 })
+      }
+    });
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "system", "boot-progress", "--json"]);
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload.command).toBe("system.boot-progress");
+
+    write.mockRestore();
+  });
+
+  it("does not silently fall back to defaults for unsupported partial systemApi injection", async () => {
+    const partialSystemApi = {
+      version: async () => ({ version: "3.1.0" })
+    };
+    expect(() =>
+      createCli({
+        systemApi: partialSystemApi as unknown as import("../../src/commands/system.js").SystemApi
+      })
+    ).toThrow();
+  });
+
+  it("prints concise non-JSON entrypoint errors without stack traces", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["--import", "tsx", "src/index.ts", "system", "version"],
+      {
+        cwd: process.cwd(),
+        env: { ...process.env, SIYUAN_TOKEN: "" },
+        encoding: "utf8"
+      }
+    );
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("CONFIG_MISSING_TOKEN");
+    expect(result.stderr).not.toMatch(/\n\s*at\s+/);
   });
 });
