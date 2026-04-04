@@ -33,12 +33,12 @@ describe("full e2e", () => {
       const payload = parseJsonPayload(result.stdout) as {
         ok: boolean;
         command: string;
-        data?: { version?: string };
+        data?: unknown;
       };
 
       expect(payload.ok).toBe(true);
       expect(payload.command).toBe("system.version");
-      expect(typeof payload.data?.version).toBe("string");
+      expect(typeof payload.data).toBe("string");
     }
   );
 

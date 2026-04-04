@@ -129,9 +129,7 @@ Success shape:
 {
   "ok": true,
   "command": "system.version",
-  "data": {
-    "version": "3.1.0"
-  },
+  "data": "3.1.0",
   "meta": {
     "duration_ms": 12
   }
