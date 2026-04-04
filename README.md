@@ -181,4 +181,14 @@ The current REPL is intentionally thin. It forwards normal CLI commands and does
 npm test -- --run
 ```
 
-Live-environment notes are documented in [TEST.md](/Users/michael/vibe_coding_pj/claude_code_pj/build-mcp/Siyuan-CLI/TEST.md).
+`tests/test_full_e2e.spec.ts` is a gated live smoke file.
+
+- Current gate condition is environment-based: it runs only when both `SIYUAN_BASE_URL` and `SIYUAN_TOKEN` are set in the test process.
+- When set, it executes:
+  - `node --import tsx src/index.ts system version --json`
+  - `node --import tsx src/index.ts notebook list --json`
+- It asserts both commands exit `0` and return valid JSON with `ok: true` and commands `system.version` and `notebook.list`.
+- This file does not prove every live config mode. The CLI also supports flags/config-file/profile resolution for live setup; those paths are intentionally out of scope for this env-gated smoke.
+- When either env var is missing, live checks are skipped cleanly.
+
+Live-environment details are documented in [TEST.md](/Users/michael/vibe_coding_pj/claude_code_pj/build-mcp/Siyuan-CLI/TEST.md).

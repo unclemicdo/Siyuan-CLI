@@ -32,21 +32,37 @@ npm test -- --run tests/test_full_e2e.spec.ts
 
 `tests/test_full_e2e.spec.ts` is intentionally gated behind live environment variables.
 
-Set both of these before adding live end-to-end assertions:
+Set both variables to enable live smoke checks:
 
 ```bash
 export SIYUAN_BASE_URL=http://127.0.0.1:6806
 export SIYUAN_TOKEN=your-token
 ```
 
-Optional:
+With both vars present, the file runs these commands in JSON mode:
 
 ```bash
-export SIYUAN_TIMEOUT=15000
-export SIYUAN_PROFILE=local
+node --import tsx src/index.ts system version --json
+node --import tsx src/index.ts notebook list --json
 ```
 
-If `SIYUAN_BASE_URL` and `SIYUAN_TOKEN` are absent, the live e2e check is skipped cleanly.
+Expected success behavior:
+
+- both commands exit with status `0`
+- JSON payloads are valid and contain `ok: true`
+- `command` values are `system.version` and `notebook.list`
+
+Expected failure behavior when live env is set but the target is unhealthy (bad URL, token, network):
+
+- one or both smoke tests fail due to non-zero exit status or invalid JSON payload
+
+If either `SIYUAN_BASE_URL` or `SIYUAN_TOKEN` is missing, live tests are skipped cleanly and the file still passes.
+
+Scope note:
+
+- this e2e file is env-gated by design for predictable local/CI behavior
+- it is not an exhaustive proof of every valid live config path
+- the CLI also supports live setup through flags, `~/.config/siyuan-cli/config.json`, and profile resolution; those modes are covered by other tests/manual smoke, not this file
 
 ## Config Resolution Checks
 
