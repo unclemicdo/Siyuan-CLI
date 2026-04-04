@@ -49,8 +49,11 @@ export class SiyuanClient {
     return this.post("/api/filetree/moveDocsByID", { fromIDs, toID });
   }
 
-  async removeDoc(id: string): Promise<unknown> {
-    return this.post("/api/filetree/removeDocByID", { id });
+  async removeDoc(id: string, force?: boolean): Promise<unknown> {
+    return this.post("/api/filetree/removeDocByID", {
+      id,
+      ...(typeof force === "boolean" ? { force } : {})
+    });
   }
 
   async exportMarkdown(id: string): Promise<unknown> {

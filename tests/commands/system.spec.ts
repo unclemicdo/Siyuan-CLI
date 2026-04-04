@@ -322,6 +322,35 @@ describe("siyuan client", () => {
       }
     });
   });
+
+  it("passes force in removeDoc payload when requested", async () => {
+    const post = vi.fn(async () => {
+      const response: AxiosResponse<{
+        code: number;
+        msg: string;
+        data: { removed: boolean };
+      }> = {
+        data: {
+          code: 0,
+          msg: "ok",
+          data: { removed: true }
+        },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: { headers: {} }
+      };
+      return response;
+    });
+    const client = new SiyuanClient({ post } as never);
+
+    await client.removeDoc("doc-1", true);
+
+    expect(post).toHaveBeenCalledWith("/api/filetree/removeDocByID", {
+      id: "doc-1",
+      force: true
+    });
+  });
 });
 
 describe("system command", () => {
@@ -636,5 +665,31 @@ describe("system command", () => {
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("CONFIG_MISSING_TOKEN");
     expect(result.stderr).not.toMatch(/\n\s*at\s+/);
+  });
+
+  it("preserves root token and base-url when forwarding commands through repl", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        "src/index.ts",
+        "--token",
+        "flag-token",
+        "--base-url",
+        "http://127.0.0.1:1",
+        "repl"
+      ],
+      {
+        cwd: process.cwd(),
+        input: "system version --json\nexit\n",
+        env: process.env,
+        encoding: "utf8"
+      }
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain('"code":"API_NETWORK_ERROR"');
+    expect(result.stdout).not.toContain('"code":"CONFIG_MISSING_TOKEN"');
   });
 });
