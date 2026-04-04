@@ -302,7 +302,10 @@ function createDefaultWorkflowApi(createClient: () => SiyuanClient): WorkflowApi
   return {
     resolvePath: async (path: string) => resolvePathByHPath(createClient, path),
     createDoc: async (input) => {
-      const result = await createClient().createDoc(input);
+      const result = await createClient().createDoc({
+        ...input,
+        markdown: input.markdown ?? ""
+      });
       return normalizeIdResult(result, "workflow.doc-upsert");
     },
     appendBlock: async (input) => createClient().appendBlock(input),

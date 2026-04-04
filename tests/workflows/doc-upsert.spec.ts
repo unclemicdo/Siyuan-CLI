@@ -1,8 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createCli } from "../../src/cli.js";
+import { SiyuanClient } from "../../src/core/client.js";
 import { blockBatch } from "../../src/workflows/block-batch.js";
 import { docUpsert } from "../../src/workflows/doc-upsert.js";
 import { sqlReport } from "../../src/workflows/sql-report.js";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("docUpsert", () => {
   it("creates a document when resolvePath returns null and appends content", async () => {
@@ -120,6 +125,82 @@ describe("sqlReport", () => {
 });
 
 describe("workflow commands", () => {
+  it("passes empty markdown when default workflow doc-upsert creates a new doc", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const previousToken = process.env.SIYUAN_TOKEN;
+    const previousBaseUrl = process.env.SIYUAN_BASE_URL;
+    process.env.SIYUAN_TOKEN = "test-token";
+    process.env.SIYUAN_BASE_URL = "http://127.0.0.1:6806";
+
+    const querySql = vi
+      .spyOn(SiyuanClient.prototype, "querySql")
+      .mockResolvedValue([]);
+    const createDoc = vi
+      .spyOn(SiyuanClient.prototype, "createDoc")
+      .mockImplementation(async (input) =>
+        input.markdown === "" ? "doc-1" : null
+      );
+    const appendBlock = vi
+      .spyOn(SiyuanClient.prototype, "appendBlock")
+      .mockResolvedValue([{ id: "block-1" }]);
+
+    const cli = createCli();
+    cli.exitOverride();
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "workflow",
+      "doc-upsert",
+      "--notebook",
+      "nb-1",
+      "--path",
+      "/Projects/New-Doc",
+      "--append",
+      "Hello",
+      "--json"
+    ]);
+
+    expect(querySql).toHaveBeenCalledTimes(1);
+    expect(createDoc).toHaveBeenCalledWith({
+      notebook: "nb-1",
+      path: "/Projects/New-Doc",
+      markdown: ""
+    });
+    expect(appendBlock).toHaveBeenCalledWith({
+      parentID: "doc-1",
+      data: "Hello",
+      dataType: "markdown"
+    });
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload).toEqual(
+      expect.objectContaining({
+        ok: true,
+        command: "workflow.doc-upsert",
+        data: {
+          docId: "doc-1",
+          created: true
+        }
+      })
+    );
+
+    if (previousToken === undefined) {
+      delete process.env.SIYUAN_TOKEN;
+    } else {
+      process.env.SIYUAN_TOKEN = previousToken;
+    }
+
+    if (previousBaseUrl === undefined) {
+      delete process.env.SIYUAN_BASE_URL;
+    } else {
+      process.env.SIYUAN_BASE_URL = previousBaseUrl;
+    }
+
+    write.mockRestore();
+  });
+
   it("runs workflow sql-report in json mode", async () => {
     const write = vi.fn(() => true);
     const query = vi.fn(async () => [{ id: "b1" }]);
