@@ -100,3 +100,10 @@ Expected behavior:
 - JSON mode writes valid JSON to `stdout`
 - failures return structured `CONFIG_*`, `API_*`, `SQL_*`, or `VALIDATION_*` errors
 - REPL starts with `sy>` and exits cleanly on `exit` or `quit`
+
+REPL scope note:
+
+- REPL context injection is intentionally narrow
+- `use notebook` currently feeds `workflow doc-upsert` and `doc create`
+- `use doc` currently feeds `doc export-md`, `doc remove`, `doc rename`, `doc resolve-path`, `block get`, `block children`, `block update`, `block remove`, `block append`, and `block prepend`
+- other commands remain passthrough and should be tested with explicit flags

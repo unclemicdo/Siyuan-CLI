@@ -173,7 +173,31 @@ SIYUAN_TOKEN=your-token npm run dev -- repl
 
 Exit with `exit` or `quit`.
 
-The current REPL is intentionally thin. It forwards normal CLI commands and does not add a separate DSL.
+The current REPL is intentionally thin. It forwards normal CLI commands and adds only a small amount of context-aware flag injection.
+
+Built-in REPL helpers:
+
+- `profile <name>`
+- `use notebook <id-or-name>`
+- `use doc <id-or-path>`
+- `context`
+
+Current context injection is intentionally narrow:
+
+- `workflow doc-upsert` can inherit `--notebook` and `--path`
+- `doc create` can inherit `--notebook`
+- `doc export-md`, `doc remove`, and `doc rename` can inherit `--id`
+- `doc resolve-path` can inherit `--path`
+- `block get`, `block children`, `block update`, and `block remove` can inherit `--id`
+- `block append` and `block prepend` can inherit `--parent-id`
+
+Other commands remain plain passthrough and must be given explicit flags.
+
+## Current Limitations
+
+- Live end-to-end coverage is still environment-gated and currently proves only `system version` and `notebook list`.
+- REPL context injection covers only the command/flag pairs listed above; it is not a general-purpose shell layer.
+- Offline or unhealthy targets return structured `API_*` failures, but the command still exits non-zero.
 
 ## Tests
 
