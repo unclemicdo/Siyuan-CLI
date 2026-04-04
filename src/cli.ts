@@ -391,27 +391,51 @@ async function resolvePathByHPath(
   createClient: () => SiyuanClient,
   path: string
 ): Promise<{ id: string } | null> {
-  const stmt =
-    "SELECT id FROM blocks " +
-    `WHERE type = 'd' AND hpath = ${quoteSqlString(path)} ` +
-    "ORDER BY updated DESC LIMIT 1";
-  const rows = await createClient().querySql(stmt);
+  for (const candidate of candidateHPaths(path)) {
+    const stmt =
+      "SELECT id FROM blocks " +
+      `WHERE type = 'd' AND hpath = ${quoteSqlString(candidate)} ` +
+      "ORDER BY updated DESC LIMIT 1";
+    const rows = await createClient().querySql(stmt);
 
-  if (!Array.isArray(rows)) {
-    return null;
-  }
+    if (!Array.isArray(rows)) {
+      continue;
+    }
 
-  const firstRow = rows[0];
-  if (
-    firstRow &&
-    typeof firstRow === "object" &&
-    "id" in firstRow &&
-    typeof firstRow.id === "string"
-  ) {
-    return { id: firstRow.id };
+    const firstRow = rows[0];
+    if (
+      firstRow &&
+      typeof firstRow === "object" &&
+      "id" in firstRow &&
+      typeof firstRow.id === "string"
+    ) {
+      return { id: firstRow.id };
+    }
   }
 
   return null;
+}
+
+function candidateHPaths(path: string): string[] {
+  const candidates = [path];
+  const stripped = stripNotebookPrefix(path);
+  if (stripped && stripped !== path) {
+    candidates.push(stripped);
+  }
+  return candidates;
+}
+
+function stripNotebookPrefix(path: string): string | null {
+  if (!path.startsWith("/")) {
+    return null;
+  }
+
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length < 3) {
+    return null;
+  }
+
+  return `/${segments.slice(1).join("/")}`;
 }
 
 function quoteSqlString(value: string): string {

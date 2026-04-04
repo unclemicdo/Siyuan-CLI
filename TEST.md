@@ -107,3 +107,9 @@ REPL scope note:
 - `use notebook` currently feeds `workflow doc-upsert` and `doc create`
 - `use doc` currently feeds `doc export-md`, `doc remove`, `doc rename`, `doc resolve-path`, `block get`, `block children`, `block update`, `block remove`, `block append`, and `block prepend`
 - other commands remain passthrough and should be tested with explicit flags
+
+`doc resolve-path` note:
+
+- the default live lookup first matches the stored SiYuan `hpath`
+- if that misses, it retries once after stripping a leading notebook segment
+- in practice this means both `/Projects/Doc` and `/Notebook/Projects/Doc` are accepted

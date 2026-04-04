@@ -191,6 +191,11 @@ Current context injection is intentionally narrow:
 
 Other commands remain plain passthrough and must be given explicit flags.
 
+`doc resolve-path` now accepts either of these path styles:
+
+- the stored SiYuan `hpath`, such as `/Projects/Doc`
+- the same path with a leading notebook segment, such as `/Notebook/Projects/Doc`
+
 ## Current Limitations
 
 - Live end-to-end coverage is still environment-gated and currently proves only `system version` and `notebook list`.

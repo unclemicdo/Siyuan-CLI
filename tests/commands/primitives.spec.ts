@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createCli } from "../../src/cli.js";
+import { SiyuanClient } from "../../src/core/client.js";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("notebook commands", () => {
   it("creates, opens, and closes notebooks through injected notebookApi methods", async () => {
@@ -241,6 +246,65 @@ describe("doc commands", () => {
         data: { id: "doc-1", path: "/Work/Doc" }
       })
     );
+  });
+
+  it("accepts notebook-prefixed paths for the default doc resolve-path path", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const previousToken = process.env.SIYUAN_TOKEN;
+    const previousBaseUrl = process.env.SIYUAN_BASE_URL;
+    process.env.SIYUAN_TOKEN = "test-token";
+    process.env.SIYUAN_BASE_URL = "http://127.0.0.1:6806";
+
+    const querySql = vi
+      .spyOn(SiyuanClient.prototype, "querySql")
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: "doc-1" }]);
+
+    const cli = createCli();
+    cli.exitOverride();
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "doc",
+      "resolve-path",
+      "--path",
+      "/Notebook/Projects/Doc",
+      "--json"
+    ]);
+
+    expect(querySql).toHaveBeenNthCalledWith(
+      1,
+      "SELECT id FROM blocks WHERE type = 'd' AND hpath = '/Notebook/Projects/Doc' ORDER BY updated DESC LIMIT 1"
+    );
+    expect(querySql).toHaveBeenNthCalledWith(
+      2,
+      "SELECT id FROM blocks WHERE type = 'd' AND hpath = '/Projects/Doc' ORDER BY updated DESC LIMIT 1"
+    );
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload).toEqual(
+      expect.objectContaining({
+        ok: true,
+        command: "doc.resolve-path",
+        data: { id: "doc-1" }
+      })
+    );
+
+    if (previousToken === undefined) {
+      delete process.env.SIYUAN_TOKEN;
+    } else {
+      process.env.SIYUAN_TOKEN = previousToken;
+    }
+
+    if (previousBaseUrl === undefined) {
+      delete process.env.SIYUAN_BASE_URL;
+    } else {
+      process.env.SIYUAN_BASE_URL = previousBaseUrl;
+    }
+
+    write.mockRestore();
   });
 });
 
