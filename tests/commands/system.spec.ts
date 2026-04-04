@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AxiosResponse } from "axios";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import {
   createHttpClient,
   formatFailure,
@@ -43,6 +46,72 @@ describe("core contracts", () => {
     expect(result.baseUrl).toBe("http://env.local:6806");
     expect(result.token).toBe("env-token");
     expect(result.timeout).toBe(12000);
+  });
+
+  it("resolves config from a config file when env is omitted", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-config-"));
+    const configPath = join(tempDir, "config.json");
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        defaultProfile: "local",
+        profiles: {
+          local: {
+            baseUrl: "http://config.local:6806",
+            token: "config-token",
+            timeout: 18000
+          }
+        }
+      })
+    );
+
+    const result = resolveConfig({
+      env: {},
+      configFilePath: configPath
+    });
+
+    expect(result.baseUrl).toBe("http://config.local:6806");
+    expect(result.token).toBe("config-token");
+    expect(result.timeout).toBe(18000);
+    expect(result.profile).toBe("local");
+
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it("prefers an explicit profile over the config default profile", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-config-"));
+    const configPath = join(tempDir, "config.json");
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        defaultProfile: "local",
+        profiles: {
+          local: {
+            baseUrl: "http://config.local:6806",
+            token: "config-token",
+            timeout: 18000
+          },
+          docker: {
+            baseUrl: "http://docker.local:6806",
+            token: "docker-token",
+            timeout: 22000
+          }
+        }
+      })
+    );
+
+    const result = resolveConfig({
+      flags: { profile: "docker" },
+      env: {},
+      configFilePath: configPath
+    });
+
+    expect(result.baseUrl).toBe("http://docker.local:6806");
+    expect(result.token).toBe("docker-token");
+    expect(result.timeout).toBe(22000);
+    expect(result.profile).toBe("docker");
+
+    rmSync(tempDir, { recursive: true, force: true });
   });
 
   it("throws CONFIG_MISSING_TOKEN when token cannot be resolved", () => {
@@ -261,10 +330,19 @@ describe("system command", () => {
     const system = cli.commands.find((command) => command.name() === "system");
     const version = system?.commands.find((command) => command.name() === "version");
     const hasJson = version?.options.some((option) => option.long === "--json");
+    const rootOptions = cli.options.map((option) => option.long);
 
     expect(system).toBeDefined();
     expect(version).toBeDefined();
     expect(hasJson).toBe(true);
+    expect(rootOptions).toEqual(
+      expect.arrayContaining([
+        "--base-url",
+        "--token",
+        "--timeout",
+        "--profile"
+      ])
+    );
   });
 
   it("writes structured JSON for system version", async () => {
@@ -439,6 +517,47 @@ describe("system command", () => {
       delete process.env.SIYUAN_TOKEN;
     } else {
       process.env.SIYUAN_TOKEN = priorToken;
+    }
+    write.mockRestore();
+  });
+
+  it("uses root --token and --base-url flags for the default client path", async () => {
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    const priorToken = process.env.SIYUAN_TOKEN;
+    const priorBaseUrl = process.env.SIYUAN_BASE_URL;
+    delete process.env.SIYUAN_TOKEN;
+    delete process.env.SIYUAN_BASE_URL;
+    const cli = createCli();
+    cli.exitOverride();
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "--token",
+      "flag-token",
+      "--base-url",
+      "http://127.0.0.1:1",
+      "system",
+      "version",
+      "--json"
+    ]);
+
+    const output = write.mock.calls.map(([value]) => String(value)).join("");
+    const payload = JSON.parse(output);
+    expect(payload.ok).toBe(false);
+    expect(payload.command).toBe("system.version");
+    expect(payload.error.code).toBe("API_NETWORK_ERROR");
+
+    if (priorToken === undefined) {
+      delete process.env.SIYUAN_TOKEN;
+    } else {
+      process.env.SIYUAN_TOKEN = priorToken;
+    }
+
+    if (priorBaseUrl === undefined) {
+      delete process.env.SIYUAN_BASE_URL;
+    } else {
+      process.env.SIYUAN_BASE_URL = priorBaseUrl;
     }
     write.mockRestore();
   });

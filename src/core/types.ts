@@ -11,6 +11,7 @@ export interface SiyuanConfig {
 export interface ResolveConfigInput {
   flags?: Partial<SiyuanConfig>;
   env?: NodeJS.ProcessEnv;
+  configFilePath?: string;
 }
 
 export interface CommandSuccess<T> {
