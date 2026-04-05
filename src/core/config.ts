@@ -35,9 +35,7 @@ export function resolveConfig(input: ResolveConfigInput = {}): SiyuanConfig {
     profileConfig?.baseUrl ??
     DEFAULT_BASE_URL;
   const tokenRaw =
-    input.flags?.token ??
-    env.SIYUAN_TOKEN ??
-    profileConfig?.token;
+    env.SIYUAN_TOKEN ?? profileConfig?.token;
   const timeoutRaw =
     input.flags?.timeout ??
     env.SIYUAN_TIMEOUT ??

@@ -63,19 +63,20 @@ Scope note:
 - this e2e file is env-gated by design for predictable local/CI behavior
 - it is not an exhaustive proof of every valid live config path
 - the CLI also supports live setup through flags, `~/.config/siyuan-cli/config.json`, and profile resolution; those modes are covered by other tests/manual smoke, not this file
+- token resolution is intentionally narrower: only environment variables and config-file profiles are supported
 
 ## Config Resolution Checks
 
 The config loader now supports:
 
-- root flags like `--token` and `--profile`
+- root flags like `--base-url`, `--timeout`, and `--profile`
 - environment variables
 - `~/.config/siyuan-cli/config.json`
 
 Quick smoke:
 
 ```bash
-npm run dev -- --token test-token --base-url http://127.0.0.1:1 system version --json
+SIYUAN_TOKEN=test-token npm run dev -- --base-url http://127.0.0.1:1 system version --json
 ```
 
 Expected behavior:

@@ -38,7 +38,6 @@ Optional environment variables:
 Global flags:
 
 - `--base-url`
-- `--token`
 - `--timeout`
 - `--profile`
 
@@ -49,10 +48,15 @@ Defaults:
 
 Configuration precedence:
 
-1. explicit CLI flags
+1. explicit CLI flags for `baseUrl`, `timeout`, and `profile`
 2. environment variables
 3. config file
 4. built-in defaults
+
+Token resolution precedence:
+
+1. `SIYUAN_TOKEN`
+2. config file profile token
 
 Default config file path:
 

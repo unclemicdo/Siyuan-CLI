@@ -15,13 +15,13 @@ import {
 import { createCli } from "../../src/cli.js";
 
 describe("core contracts", () => {
-  it("resolves config with explicit values taking priority", () => {
+  it("resolves base-url and timeout from explicit flags but token only from environment", () => {
     const result = resolveConfig({
       flags: {
         baseUrl: "http://127.0.0.1:6806",
-        token: "flag-token",
-        timeout: 5000
-      },
+        timeout: 5000,
+        token: "flag-token"
+      } as never,
       env: {
         SIYUAN_BASE_URL: "http://env.local:6806",
         SIYUAN_TOKEN: "env-token",
@@ -30,7 +30,7 @@ describe("core contracts", () => {
     });
 
     expect(result.baseUrl).toBe("http://127.0.0.1:6806");
-    expect(result.token).toBe("flag-token");
+    expect(result.token).toBe("env-token");
     expect(result.timeout).toBe(5000);
   });
 
@@ -120,10 +120,11 @@ describe("core contracts", () => {
     );
   });
 
-  it("throws CONFIG_MISSING_TOKEN for a blank token after trimming", () => {
+  it("ignores an unsupported token value in flags", () => {
     expect(() =>
       resolveConfig({
-        flags: { token: "   " }
+        flags: { token: "flag-token" } as never,
+        env: {}
       })
     ).toThrowError(expect.objectContaining({ code: "CONFIG_MISSING_TOKEN" }));
   });
@@ -131,7 +132,8 @@ describe("core contracts", () => {
   it("throws CONFIG_INVALID_TIMEOUT for a non-positive timeout", () => {
     expect(() =>
       resolveConfig({
-        flags: { token: "flag-token", timeout: 0 }
+        flags: { timeout: 0 },
+        env: { SIYUAN_TOKEN: "env-token" }
       })
     ).toThrowError(expect.objectContaining({ code: "CONFIG_INVALID_TIMEOUT" }));
   });
@@ -139,7 +141,8 @@ describe("core contracts", () => {
   it("throws CONFIG_INVALID_BASE_URL for a non-http(s) base URL", () => {
     expect(() =>
       resolveConfig({
-        flags: { token: "flag-token", baseUrl: "ftp://localhost:6806" }
+        flags: { baseUrl: "ftp://localhost:6806" },
+        env: { SIYUAN_TOKEN: "env-token" }
       })
     ).toThrowError(
       expect.objectContaining({ code: "CONFIG_INVALID_BASE_URL" })
@@ -367,11 +370,11 @@ describe("system command", () => {
     expect(rootOptions).toEqual(
       expect.arrayContaining([
         "--base-url",
-        "--token",
         "--timeout",
         "--profile"
       ])
     );
+    expect(rootOptions).not.toContain("--token");
   });
 
   it("writes structured JSON for system version", async () => {
@@ -550,11 +553,28 @@ describe("system command", () => {
     write.mockRestore();
   });
 
-  it("uses root --token and --base-url flags for the default client path", async () => {
+  it("rejects the removed root --token flag", async () => {
+    const cli = createCli();
+    cli.exitOverride();
+
+    await expect(
+      cli.parseAsync([
+        "node",
+        "sy",
+        "--token",
+        "flag-token",
+        "system",
+        "version",
+        "--json"
+      ])
+    ).rejects.toMatchObject({ code: "commander.unknownOption" });
+  });
+
+  it("uses root --base-url with environment token for the default client path", async () => {
     const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
     const priorToken = process.env.SIYUAN_TOKEN;
     const priorBaseUrl = process.env.SIYUAN_BASE_URL;
-    delete process.env.SIYUAN_TOKEN;
+    process.env.SIYUAN_TOKEN = "env-token";
     delete process.env.SIYUAN_BASE_URL;
     const cli = createCli();
     cli.exitOverride();
@@ -562,8 +582,6 @@ describe("system command", () => {
     await cli.parseAsync([
       "node",
       "sy",
-      "--token",
-      "flag-token",
       "--base-url",
       "http://127.0.0.1:1",
       "system",
@@ -667,15 +685,13 @@ describe("system command", () => {
     expect(result.stderr).not.toMatch(/\n\s*at\s+/);
   });
 
-  it("preserves root token and base-url when forwarding commands through repl", () => {
+  it("preserves root base-url when forwarding commands through repl", () => {
     const result = spawnSync(
       process.execPath,
       [
         "--import",
         "tsx",
         "src/index.ts",
-        "--token",
-        "flag-token",
         "--base-url",
         "http://127.0.0.1:1",
         "repl"
@@ -683,7 +699,7 @@ describe("system command", () => {
       {
         cwd: process.cwd(),
         input: "system version --json\nexit\n",
-        env: process.env,
+        env: { ...process.env, SIYUAN_TOKEN: "env-token" },
         encoding: "utf8"
       }
     );

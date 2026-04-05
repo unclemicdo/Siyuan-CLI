@@ -31,7 +31,8 @@ import {
   createHttpClient,
   resolveConfig,
   SiyuanClient,
-  type SiyuanConfig
+  type SiyuanConfig,
+  type SiyuanConfigFlags
 } from "./core/index.js";
 
 export interface CliDeps
@@ -55,12 +56,11 @@ export interface CliDepsInput {
 }
 
 export function createCli(input: CliDepsInput = {}): Command {
-  let currentConfigFlags: Partial<SiyuanConfig> = {};
+  let currentConfigFlags: SiyuanConfigFlags = {};
   const program = new Command().name("sy").description("Agent-first CLI for SiYuan Note");
 
   program
     .option("--base-url <url>")
-    .option("--token <token>")
     .option("--timeout <ms>")
     .option("--profile <name>");
 
@@ -113,7 +113,7 @@ export function createCli(input: CliDepsInput = {}): Command {
 
 function createDeps(
   input: CliDepsInput,
-  getConfigFlags: () => Partial<SiyuanConfig> = () => ({})
+  getConfigFlags: () => SiyuanConfigFlags = () => ({})
 ): CliDeps {
   const createClient = createClientFactory(getConfigFlags);
   const defaultNotebookApi = createDefaultNotebookApi(createClient);
@@ -165,13 +165,12 @@ function createClientFactory(getConfigFlags: () => Partial<SiyuanConfig>) {
 
 function prependGlobalFlags(
   argv: string[],
-  flags: Partial<SiyuanConfig>
+  flags: SiyuanConfigFlags
 ): string[] {
   const next = [...argv];
   const prefix: string[] = [];
 
   pushMissingFlag(prefix, next, "--base-url", flags.baseUrl);
-  pushMissingFlag(prefix, next, "--token", flags.token);
   pushMissingFlag(
     prefix,
     next,
@@ -186,7 +185,7 @@ function prependGlobalFlags(
 function pushMissingFlag(
   prefix: string[],
   argv: string[],
-  flag: "--base-url" | "--token" | "--timeout" | "--profile",
+  flag: "--base-url" | "--timeout" | "--profile",
   value?: string
 ): void {
   if (!value || argv.includes(flag)) {
@@ -196,10 +195,9 @@ function pushMissingFlag(
   prefix.push(flag, value);
 }
 
-function extractConfigFlags(options: Record<string, unknown>): Partial<SiyuanConfig> {
+function extractConfigFlags(options: Record<string, unknown>): SiyuanConfigFlags {
   return {
     baseUrl: asString(options.baseUrl),
-    token: asString(options.token),
     timeout: asNumber(options.timeout),
     profile: asString(options.profile)
   };

@@ -8,8 +8,14 @@ export interface SiyuanConfig {
   profile?: string;
 }
 
+export interface SiyuanConfigFlags {
+  baseUrl?: string;
+  timeout?: number;
+  profile?: string;
+}
+
 export interface ResolveConfigInput {
-  flags?: Partial<SiyuanConfig>;
+  flags?: SiyuanConfigFlags;
   env?: NodeJS.ProcessEnv;
   configFilePath?: string;
 }
