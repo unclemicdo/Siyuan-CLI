@@ -73,6 +73,8 @@ The config loader now supports:
 - environment variables
 - `~/.config/siyuan-cli/config.json`
 
+Blank environment variable values are treated as unset and fall back to config-file or default values.
+
 Quick smoke:
 
 ```bash

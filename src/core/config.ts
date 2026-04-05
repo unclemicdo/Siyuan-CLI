@@ -22,6 +22,9 @@ interface ConfigFileShape {
 
 export function resolveConfig(input: ResolveConfigInput = {}): SiyuanConfig {
   const env = input.env ?? process.env;
+  const envBaseUrl = normalizeOptionalEnvString(env.SIYUAN_BASE_URL);
+  const envToken = normalizeOptionalEnvString(env.SIYUAN_TOKEN);
+  const envTimeout = normalizeOptionalEnvString(env.SIYUAN_TIMEOUT);
   const fileConfig = readConfigFile(input.configFilePath);
   const requestedProfile =
     input.flags?.profile ?? env.SIYUAN_PROFILE ?? fileConfig.defaultProfile;
@@ -31,14 +34,13 @@ export function resolveConfig(input: ResolveConfigInput = {}): SiyuanConfig {
 
   const baseUrl =
     input.flags?.baseUrl ??
-    env.SIYUAN_BASE_URL ??
+    envBaseUrl ??
     profileConfig?.baseUrl ??
     DEFAULT_BASE_URL;
-  const tokenRaw =
-    env.SIYUAN_TOKEN ?? profileConfig?.token;
+  const tokenRaw = envToken ?? profileConfig?.token;
   const timeoutRaw =
     input.flags?.timeout ??
-    env.SIYUAN_TIMEOUT ??
+    envTimeout ??
     profileConfig?.timeout;
   const timeout = Number(timeoutRaw ?? DEFAULT_TIMEOUT_MS);
   const profile = requestedProfile;
@@ -102,4 +104,13 @@ function readConfigFile(configFilePath = DEFAULT_CONFIG_FILE): ConfigFileShape {
       { configFilePath }
     );
   }
+}
+
+function normalizeOptionalEnvString(value: string | undefined): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
 }

@@ -78,6 +78,39 @@ describe("core contracts", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
+  it("treats blank environment variables as missing and falls back to the config file", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-config-"));
+    const configPath = join(tempDir, "config.json");
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        defaultProfile: "local",
+        profiles: {
+          local: {
+            baseUrl: "http://config.local:6806",
+            token: "config-token",
+            timeout: 18000
+          }
+        }
+      })
+    );
+
+    const result = resolveConfig({
+      env: {
+        SIYUAN_BASE_URL: "   ",
+        SIYUAN_TOKEN: "",
+        SIYUAN_TIMEOUT: "   "
+      },
+      configFilePath: configPath
+    });
+
+    expect(result.baseUrl).toBe("http://config.local:6806");
+    expect(result.token).toBe("config-token");
+    expect(result.timeout).toBe(18000);
+
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
   it("prefers an explicit profile over the config default profile", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-config-"));
     const configPath = join(tempDir, "config.json");

@@ -58,6 +58,8 @@ Token resolution precedence:
 1. `SIYUAN_TOKEN`
 2. config file profile token
 
+Blank environment variable values are treated as unset and fall back to the next source.
+
 Default config file path:
 
 ```text
