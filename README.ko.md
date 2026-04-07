@@ -102,7 +102,7 @@ Node.js가 없다면 먼저 Node.js 22.10.0 이상을 설치하세요.
 ### 2. 저장소 클론
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/unclemicdo/Siyuan-CLI
 cd Siyuan-CLI
 ```
 

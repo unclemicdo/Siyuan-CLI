@@ -102,7 +102,7 @@ Si Node.js no está instalado, instala primero Node.js 22.10.0 o superior.
 ### 2. Clona el repositorio
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/unclemicdo/Siyuan-CLI
 cd Siyuan-CLI
 ```
 

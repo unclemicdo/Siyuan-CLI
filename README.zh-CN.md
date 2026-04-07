@@ -102,7 +102,7 @@ npm -v
 ### 2. 克隆仓库
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/unclemicdo/Siyuan-CLI
 cd Siyuan-CLI
 ```
 
