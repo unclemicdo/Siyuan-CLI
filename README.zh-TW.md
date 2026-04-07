@@ -141,16 +141,21 @@ sy system version --json
 
 這個倉庫也內建了一個隨版本一起維護的 `siyuan-cli` skill，可供 Codex 與 Claude Code 使用。
 
-發現位置：
+共享來源目錄：
 
-- 共享來源：`skills/siyuan-cli/`
-- Codex 入口：`.codex/skills/siyuan-cli/`
-- Claude Code 入口：`.claude/skills/siyuan-cli/`
+- `skills/siyuan-cli/`
 
-安裝方式：
+倉庫內相容入口：
 
-- 不需要額外下載，這個 skill 就在倉庫裡
-- 如果你的 agent 執行環境不會自動發現倉庫內 skill，就把這些目錄接入它的 skill 搜尋路徑，或複製到本地 skill 目錄
+- Codex：`.codex/skills/siyuan-cli/`
+- Claude Code：`.claude/skills/siyuan-cli/`
+
+手動安裝：
+
+- 只複製 `skills/siyuan-cli/` 到你的本地 skill 目錄
+- Codex 目標路徑：`~/.codex/skills/siyuan-cli/`
+- Claude Code 目標路徑：`~/.claude/skills/siyuan-cli/`
+- 不要單獨複製 `.codex/skills/siyuan-cli/` 或 `.claude/skills/siyuan-cli/`；它們只是倉庫內的輕量入口
 
 使用方式：
 

@@ -141,16 +141,21 @@ sy system version --json
 
 이 저장소에는 Codex 와 Claude Code 에서 사용할 수 있는 버전 관리형 `siyuan-cli` 스킬도 함께 들어 있습니다.
 
-발견 위치:
+공용 원본 디렉터리:
 
-- 공용 원본: `skills/siyuan-cli/`
-- Codex 엔트리포인트: `.codex/skills/siyuan-cli/`
-- Claude Code 엔트리포인트: `.claude/skills/siyuan-cli/`
+- `skills/siyuan-cli/`
 
-설치:
+저장소 내 호환 엔트리포인트:
 
-- 별도 다운로드는 필요하지 않으며, 이 스킬은 이미 저장소 안에 있습니다
-- 에이전트 실행 환경이 저장소 로컬 스킬을 자동으로 찾지 못한다면 이 디렉터리들을 스킬 검색 경로에 연결하거나 로컬 스킬 디렉터리로 복사하세요
+- Codex: `.codex/skills/siyuan-cli/`
+- Claude Code: `.claude/skills/siyuan-cli/`
+
+수동 설치:
+
+- `skills/siyuan-cli/` 만 로컬 스킬 디렉터리로 복사하세요
+- Codex 대상 경로: `~/.codex/skills/siyuan-cli/`
+- Claude Code 대상 경로: `~/.claude/skills/siyuan-cli/`
+- `.codex/skills/siyuan-cli/` 또는 `.claude/skills/siyuan-cli/` 만 따로 복사하지 마세요. 이들은 저장소 안의 얇은 래퍼입니다
 
 사용:
 

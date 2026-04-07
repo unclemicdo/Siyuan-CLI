@@ -141,16 +141,21 @@ sy system version --json
 
 This repository also ships a versioned `siyuan-cli` skill for Codex and Claude Code.
 
-Discovery:
+Canonical source:
 
-- shared source: `skills/siyuan-cli/`
-- Codex entrypoint: `.codex/skills/siyuan-cli/`
-- Claude Code entrypoint: `.claude/skills/siyuan-cli/`
+- `skills/siyuan-cli/`
 
-Installation:
+Repo compatibility entrypoints:
 
-- no separate download is required; the skill lives in this repository
-- if your agent runtime does not auto-discover repo-local skills, point it at the repo skill directories or copy the skill into its local skill search path
+- Codex: `.codex/skills/siyuan-cli/`
+- Claude Code: `.claude/skills/siyuan-cli/`
+
+Manual install:
+
+- copy `skills/siyuan-cli/` into your local skill directory
+- Codex target: `~/.codex/skills/siyuan-cli/`
+- Claude Code target: `~/.claude/skills/siyuan-cli/`
+- do not copy `.codex/skills/siyuan-cli/` or `.claude/skills/siyuan-cli/` by themselves; those are thin repo-local wrappers
 
 Usage:
 
