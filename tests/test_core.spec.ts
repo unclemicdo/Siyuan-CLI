@@ -39,4 +39,19 @@ describe("bootstrap", () => {
 
     expect(source.startsWith("#!/usr/bin/env node\n")).toBe(true);
   });
+
+  it("documents exported env vars instead of inline token command examples", () => {
+    const englishReadme = readFileSync(resolve(process.cwd(), "README.md"), "utf8");
+    const chineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-CN.md"),
+      "utf8"
+    );
+
+    expect(englishReadme).not.toMatch(/SIYUAN_TOKEN=your-token\s+npm run dev --/);
+    expect(chineseReadme).not.toMatch(/SIYUAN_TOKEN=your-token\s+npm run dev --/);
+    expect(englishReadme).not.toMatch(/\|\s*SIYUAN_TOKEN=your-token\s+npm run dev --/);
+    expect(chineseReadme).not.toMatch(/\|\s*SIYUAN_TOKEN=your-token\s+npm run dev --/);
+    expect(englishReadme).toContain("export SIYUAN_TOKEN=your-token");
+    expect(chineseReadme).toContain("export SIYUAN_TOKEN=your-token");
+  });
 });

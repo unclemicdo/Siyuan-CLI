@@ -6,7 +6,6 @@ import type { ResolveConfigInput, SiyuanConfig } from "./types.js";
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:6806";
 const DEFAULT_TIMEOUT_MS = 15000;
-const DEFAULT_CONFIG_FILE = join(homedir(), ".config", "siyuan-cli", "config.json");
 
 interface ConfigFileShape {
   defaultProfile?: string;
@@ -88,7 +87,7 @@ export function resolveConfig(input: ResolveConfigInput = {}): SiyuanConfig {
   };
 }
 
-function readConfigFile(configFilePath = DEFAULT_CONFIG_FILE): ConfigFileShape {
+function readConfigFile(configFilePath = getDefaultConfigFilePath()): ConfigFileShape {
   if (!existsSync(configFilePath)) {
     return {};
   }
@@ -104,6 +103,12 @@ function readConfigFile(configFilePath = DEFAULT_CONFIG_FILE): ConfigFileShape {
       { configFilePath }
     );
   }
+}
+
+function getDefaultConfigFilePath(): string {
+  const xdgConfigHome = normalizeOptionalEnvString(process.env.XDG_CONFIG_HOME);
+  const configRoot = xdgConfigHome ?? join(homedir(), ".config");
+  return join(configRoot, "siyuan-cli", "config.json");
 }
 
 function normalizeOptionalEnvString(value: string | undefined): string | undefined {

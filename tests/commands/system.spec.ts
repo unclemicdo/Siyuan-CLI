@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AxiosResponse } from "axios";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -13,6 +13,29 @@ import {
   resolveConfig
 } from "../../src/core/index.js";
 import { createCli } from "../../src/cli.js";
+
+let isolatedConfigHome = "";
+let previousXdgConfigHome: string | undefined;
+
+beforeEach(() => {
+  isolatedConfigHome = mkdtempSync(join(tmpdir(), "siyuan-cli-xdg-config-"));
+  previousXdgConfigHome = process.env.XDG_CONFIG_HOME;
+  process.env.XDG_CONFIG_HOME = isolatedConfigHome;
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+
+  if (previousXdgConfigHome === undefined) {
+    delete process.env.XDG_CONFIG_HOME;
+  } else {
+    process.env.XDG_CONFIG_HOME = previousXdgConfigHome;
+  }
+
+  if (isolatedConfigHome) {
+    rmSync(isolatedConfigHome, { recursive: true, force: true });
+  }
+});
 
 describe("core contracts", () => {
   it("resolves base-url and timeout from explicit flags but token only from environment", () => {

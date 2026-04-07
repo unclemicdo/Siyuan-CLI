@@ -1,8 +1,82 @@
 # Siyuan CLI
 
+[中文说明](./README.zh-CN.md)
+
 Agent-first TypeScript CLI for SiYuan Note.
 
-The project exposes a small, structured command surface over SiYuan's HTTP API with stable JSON output for scripts and agents. It currently focuses on core primitives, a few workflow helpers, and a lightweight REPL.
+Siyuan CLI gives you a stable command-line layer over SiYuan's HTTP API. It is designed for people who want to automate note operations, run repeatable scripts, or give AI agents a safer and more predictable way to work with SiYuan content.
+
+## Why Use Siyuan CLI
+
+If you mainly write and edit notes by hand inside SiYuan, the GUI is usually the right tool. Siyuan CLI becomes useful when the same note action stops being a one-off task and starts becoming a repeatable workflow.
+
+For everyday SiYuan users, that usually means turning routines like "create today's note", "append meeting follow-up", or "export this document" into one command you can trust.
+
+For automation and Agent workflows, it means giving scripts and local AI tools a stable way to read and write SiYuan content without hand-assembling raw HTTP requests.
+
+What that gives you in practice:
+
+- spend less time on repetitive note housekeeping and more time on the note content itself
+- keep recurring workflows consistent, such as daily logs, meeting notes, and project updates
+- trigger note actions from the terminal, shell scripts, cron jobs, shortcuts, or local tools
+- get stable JSON output that fits naturally into automation and Agent pipelines
+- use clearer commands and safer defaults than calling the raw SiYuan HTTP API directly
+
+## Common Use Cases
+
+People usually reach for Siyuan CLI in moments like these:
+
+- At the start of the day, create a dated journal, work log, or standup note from a ready-made template.
+- Right after a call, append the summary and action items to the correct project document before context is lost.
+- When a document needs to leave SiYuan, export it as Markdown for sharing, backup, publishing, or feeding another tool.
+- When a script or Agent needs reliable context, resolve a readable path once and reuse the real document ID in later commands.
+- When cleaning up or analyzing many notes at once, batch-update blocks or run SQL queries instead of editing one note at a time.
+- When SiYuan is part of a local workflow, let automation or Agents read notes, write updates, and generate reports in a predictable way.
+
+## Quick Examples
+
+The examples below assume you already configured your token through exported environment variables or a config file. Avoid placing the token inline on the command line.
+
+```bash
+export SIYUAN_TOKEN=your-token
+export SIYUAN_BASE_URL=http://127.0.0.1:6806
+```
+
+List available notebooks before you start working:
+
+```bash
+npm run dev -- notebook list --json
+```
+
+Create a project note or daily note from the terminal:
+
+```bash
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
+```
+
+Append a follow-up note after a meeting or call:
+
+```bash
+npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
+```
+
+Query note data in bulk when you need to inspect or organize content:
+
+```bash
+npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
+```
+
+Generate a simple report from SQL output for downstream workflows:
+
+```bash
+npm run dev -- workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
+```
+
+Use the REPL when you want to explore commands interactively:
+
+```bash
+printf '%s\n' 'exit' | npm run dev -- repl
+```
 
 ## Requirements
 
@@ -10,23 +84,121 @@ The project exposes a small, structured command surface over SiYuan's HTTP API w
 - A reachable SiYuan HTTP API endpoint
 - A SiYuan API token
 
-## Install
+## Installation
+
+This repository is currently source-first. The most reliable way to install it is to clone the repository and run it locally.
+
+### 1. Install Node.js
+
+Check whether Node.js is already available:
+
+```bash
+node -v
+npm -v
+```
+
+If Node.js is missing, install Node.js 22.10.0 or newer first.
+
+### 2. Clone the repository
+
+```bash
+git clone <your-repo-url>
+cd Siyuan-CLI
+```
+
+### 3. Install dependencies
 
 ```bash
 npm install
 ```
 
-## Build
+### 4. Build the CLI
 
 ```bash
 npm run build
 ```
 
-## Run
+This creates the compiled files in `dist/`.
+
+### 5. Choose how to run it
+
+After setting `SIYUAN_TOKEN` through an exported environment variable or a config file, the easiest way for first-time users is to run the source entrypoint through `npm run dev`:
 
 ```bash
-SIYUAN_TOKEN=your-token npm run dev -- system version --json
+npm run dev -- system version --json
 ```
+
+If you want a local `sy` command on your machine after building:
+
+```bash
+npm link
+sy system version --json
+```
+
+`npm link` is optional. If you prefer, you can keep using `npm run dev -- ...`.
+
+## First-Time Setup
+
+You need two pieces of information before the CLI can talk to SiYuan:
+
+- a SiYuan API token
+- the SiYuan API base URL
+
+If your SiYuan instance is running on the default local address, the base URL is usually:
+
+```text
+http://127.0.0.1:6806
+```
+
+In that case, you only need to provide a token.
+
+### Option A: Use environment variables
+
+This is the fastest way to get started:
+
+```bash
+export SIYUAN_TOKEN=your-token
+export SIYUAN_BASE_URL=http://127.0.0.1:6806
+```
+
+Then run:
+
+```bash
+npm run dev -- system version --json
+```
+
+### Option B: Use a config file
+
+This is usually better if you use the CLI often.
+
+Default config file path:
+
+```text
+~/.config/siyuan-cli/config.json
+```
+
+Example:
+
+```json
+{
+  "defaultProfile": "local",
+  "profiles": {
+    "local": {
+      "baseUrl": "http://127.0.0.1:6806",
+      "token": "local-token",
+      "timeout": 15000
+    }
+  }
+}
+```
+
+Then run:
+
+```bash
+npm run dev -- system version --json
+```
+
+### Configuration Rules
 
 Optional environment variables:
 
@@ -60,28 +232,7 @@ Token resolution precedence:
 
 Blank environment variable values are treated as unset and fall back to the next source.
 
-Default config file path:
-
-```text
-~/.config/siyuan-cli/config.json
-```
-
-Example:
-
-```json
-{
-  "defaultProfile": "local",
-  "profiles": {
-    "local": {
-      "baseUrl": "http://127.0.0.1:6806",
-      "token": "local-token",
-      "timeout": 15000
-    }
-  }
-}
-```
-
-## Current Command Surface
+## What You Can Do Today
 
 Top-level commands:
 
@@ -156,23 +307,12 @@ Failure shape:
 }
 ```
 
-## Examples
-
-```bash
-SIYUAN_TOKEN=your-token npm run dev -- notebook list --json
-SIYUAN_TOKEN=your-token npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
-SIYUAN_TOKEN=your-token npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
-SIYUAN_TOKEN=your-token npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
-SIYUAN_TOKEN=your-token npm run dev -- workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
-printf '%s\n' 'exit' | SIYUAN_TOKEN=your-token npm run dev -- repl
-```
-
 ## REPL
 
 Start the interactive shell:
 
 ```bash
-SIYUAN_TOKEN=your-token npm run dev -- repl
+npm run dev -- repl
 ```
 
 Exit with `exit` or `quit`.
@@ -197,31 +337,12 @@ Current context injection is intentionally narrow:
 
 Other commands remain plain passthrough and must be given explicit flags.
 
-`doc resolve-path` now accepts either of these path styles:
+`doc resolve-path` accepts either of these path styles:
 
 - the stored SiYuan `hpath`, such as `/Projects/Doc`
 - the same path with a leading notebook segment, such as `/Notebook/Projects/Doc`
 
 ## Current Limitations
 
-- Live end-to-end coverage is still environment-gated and currently proves only `system version` and `notebook list`.
-- REPL context injection covers only the command/flag pairs listed above; it is not a general-purpose shell layer.
+- REPL context injection covers only the command and flag pairs listed above; it is not a general-purpose shell layer.
 - Offline or unhealthy targets return structured `API_*` failures, but the command still exits non-zero.
-
-## Tests
-
-```bash
-npm test -- --run
-```
-
-`tests/test_full_e2e.spec.ts` is a gated live smoke file.
-
-- Current gate condition is environment-based: it runs only when both `SIYUAN_BASE_URL` and `SIYUAN_TOKEN` are set in the test process.
-- When set, it executes:
-  - `node --import tsx src/index.ts system version --json`
-  - `node --import tsx src/index.ts notebook list --json`
-- It asserts both commands exit `0` and return valid JSON with `ok: true` and commands `system.version` and `notebook.list`.
-- This file does not prove every live config mode. The CLI also supports flags/config-file/profile resolution for live setup; those paths are intentionally out of scope for this env-gated smoke.
-- When either env var is missing, live checks are skipped cleanly.
-
-Live-environment details are documented in [TEST.md](/Users/michael/vibe_coding_pj/claude_code_pj/build-mcp/Siyuan-CLI/TEST.md).
