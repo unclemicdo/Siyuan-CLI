@@ -108,6 +108,35 @@ describe("bootstrap", () => {
     }
   });
 
+  it("ships a root MIT license and mentions acknowledgements in every README", () => {
+    const license = readFileSync(resolve(process.cwd(), "LICENSE"), "utf8");
+    const englishReadme = readFileSync(resolve(process.cwd(), "README.md"), "utf8");
+    const simplifiedChineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-CN.md"),
+      "utf8"
+    );
+    const traditionalChineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-TW.md"),
+      "utf8"
+    );
+    const spanishReadme = readFileSync(resolve(process.cwd(), "README.es.md"), "utf8");
+    const koreanReadme = readFileSync(resolve(process.cwd(), "README.ko.md"), "utf8");
+
+    expect(license).toContain("MIT License");
+
+    for (const readme of [
+      englishReadme,
+      simplifiedChineseReadme,
+      traditionalChineseReadme,
+      spanishReadme,
+      koreanReadme
+    ]) {
+      expect(readme).toContain("https://github.com/siyuan-note/siyuan");
+      expect(readme).toContain("https://github.com/siyuan-note/siyuan/blob/master/API.md");
+      expect(readme).toContain("[LICENSE](./LICENSE)");
+    }
+  });
+
   it("ships a shared siyuan-cli skill plus codex and claude compatibility entrypoints", () => {
     const sharedSkill = resolve(process.cwd(), "skills/siyuan-cli/SKILL.md");
     const codexSkill = resolve(process.cwd(), ".codex/skills/siyuan-cli/SKILL.md");

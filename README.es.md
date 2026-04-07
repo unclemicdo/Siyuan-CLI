@@ -366,3 +366,14 @@ Los demás comandos siguen siendo un passthrough simple y deben recibir flags ex
 
 - La inyección de contexto del REPL solo cubre los pares comando/flag listados arriba; no es una capa de shell de propósito general.
 - Los objetivos desconectados o con errores devuelven fallos estructurados `API_*`, pero el comando sigue saliendo con un código distinto de cero.
+
+## Agradecimientos
+
+Este proyecto se elaboró tomando como referencia el repositorio de SiYuan y la documentación de su API:
+
+- SiYuan repo: https://github.com/siyuan-note/siyuan
+- SiYuan API docs: https://github.com/siyuan-note/siyuan/blob/master/API.md
+
+## License
+
+Este proyecto está licenciado bajo la MIT License. Consulta [LICENSE](./LICENSE).

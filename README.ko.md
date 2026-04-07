@@ -366,3 +366,14 @@ npm run dev -- repl
 
 - REPL 컨텍스트 주입은 위에 나열된 명령과 플래그 조합에만 적용되며, 범용 셸 계층이 아닙니다.
 - 대상이 오프라인이거나 비정상 상태이면 구조화된 `API_*` 실패를 반환하지만, 명령은 여전히 0이 아닌 종료 코드를 반환합니다.
+
+## 감사의 말
+
+이 프로젝트는 SiYuan 저장소와 SiYuan API 문서를 참고하여 만들었습니다:
+
+- SiYuan repo: https://github.com/siyuan-note/siyuan
+- SiYuan API docs: https://github.com/siyuan-note/siyuan/blob/master/API.md
+
+## License
+
+이 프로젝트는 MIT License를 따릅니다. 자세한 내용은 [LICENSE](./LICENSE)를 참고하세요.

@@ -366,3 +366,14 @@ npm run dev -- repl
 
 - REPL 的上下文注入只覆盖上面列出的命令与参数组合，它不是一个通用 shell 层。
 - 当目标离线或状态异常时，会返回结构化的 `API_*` 错误，但命令仍然会以非零状态退出。
+
+## 致谢
+
+这个项目的设计与实现参考了 SiYuan 仓库和 SiYuan API 文档：
+
+- SiYuan repo: https://github.com/siyuan-note/siyuan
+- SiYuan API docs: https://github.com/siyuan-note/siyuan/blob/master/API.md
+
+## License
+
+本项目使用 MIT License。详见 [LICENSE](./LICENSE)。

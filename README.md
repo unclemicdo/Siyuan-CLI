@@ -366,3 +366,14 @@ Other commands remain plain passthrough and must be given explicit flags.
 
 - REPL context injection covers only the command and flag pairs listed above; it is not a general-purpose shell layer.
 - Offline or unhealthy targets return structured `API_*` failures, but the command still exits non-zero.
+
+## Acknowledgements
+
+This project was built with reference to the SiYuan repository and the SiYuan API documentation:
+
+- SiYuan repo: https://github.com/siyuan-note/siyuan
+- SiYuan API docs: https://github.com/siyuan-note/siyuan/blob/master/API.md
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
