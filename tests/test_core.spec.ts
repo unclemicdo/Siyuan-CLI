@@ -81,6 +81,33 @@ describe("bootstrap", () => {
     expect(koreanReadme).toContain(localizedNavigation);
   });
 
+  it("documents the built-in siyuan-cli skill in every README", () => {
+    const englishReadme = readFileSync(resolve(process.cwd(), "README.md"), "utf8");
+    const simplifiedChineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-CN.md"),
+      "utf8"
+    );
+    const traditionalChineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-TW.md"),
+      "utf8"
+    );
+    const spanishReadme = readFileSync(resolve(process.cwd(), "README.es.md"), "utf8");
+    const koreanReadme = readFileSync(resolve(process.cwd(), "README.ko.md"), "utf8");
+
+    for (const readme of [
+      englishReadme,
+      simplifiedChineseReadme,
+      traditionalChineseReadme,
+      spanishReadme,
+      koreanReadme
+    ]) {
+      expect(readme).toContain("skills/siyuan-cli/");
+      expect(readme).toContain(".codex/skills/siyuan-cli/");
+      expect(readme).toContain(".claude/skills/siyuan-cli/");
+      expect(readme).toContain("siyuan-cli");
+    }
+  });
+
   it("ships a shared siyuan-cli skill plus codex and claude compatibility entrypoints", () => {
     const sharedSkill = resolve(process.cwd(), "skills/siyuan-cli/SKILL.md");
     const codexSkill = resolve(process.cwd(), ".codex/skills/siyuan-cli/SKILL.md");

@@ -137,6 +137,26 @@ sy system version --json
 
 `npm link` es opcional. Si lo prefieres, puedes seguir usando `npm run dev -- ...`.
 
+## Skill para agentes
+
+Este repositorio también incluye un skill versionado llamado `siyuan-cli` para Codex y Claude Code.
+
+Ubicación:
+
+- fuente compartida: `skills/siyuan-cli/`
+- punto de entrada para Codex: `.codex/skills/siyuan-cli/`
+- punto de entrada para Claude Code: `.claude/skills/siyuan-cli/`
+
+Instalación:
+
+- no hace falta descargar nada por separado; el skill ya vive en este repositorio
+- si tu entorno de agentes no descubre automáticamente los skills locales del repositorio, apunta a estos directorios o copia el skill a la ruta local de búsqueda de skills
+
+Uso:
+
+- pide explícitamente al agente que use el skill `siyuan-cli` cuando quiera trabajar a través de esta CLI
+- úsalo cuando el agente necesite elegir comandos, preferir `--json`, resolver rutas a ids o recuperarse de errores `CONFIG_*`, `API_*` o `SQL_*`
+
 ## Configuración Inicial
 
 Necesitas dos datos antes de que la CLI pueda comunicarse con SiYuan:

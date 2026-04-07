@@ -137,6 +137,26 @@ sy system version --json
 
 `npm link` 는 선택 사항입니다. 원한다면 계속 `npm run dev -- ...` 를 사용해도 됩니다.
 
+## 에이전트 스킬
+
+이 저장소에는 Codex 와 Claude Code 에서 사용할 수 있는 버전 관리형 `siyuan-cli` 스킬도 함께 들어 있습니다.
+
+발견 위치:
+
+- 공용 원본: `skills/siyuan-cli/`
+- Codex 엔트리포인트: `.codex/skills/siyuan-cli/`
+- Claude Code 엔트리포인트: `.claude/skills/siyuan-cli/`
+
+설치:
+
+- 별도 다운로드는 필요하지 않으며, 이 스킬은 이미 저장소 안에 있습니다
+- 에이전트 실행 환경이 저장소 로컬 스킬을 자동으로 찾지 못한다면 이 디렉터리들을 스킬 검색 경로에 연결하거나 로컬 스킬 디렉터리로 복사하세요
+
+사용:
+
+- 이 CLI 를 통해 SiYuan 작업을 하게 하려면 에이전트에게 `siyuan-cli` 스킬을 명시적으로 사용하라고 요청하세요
+- 명령 선택, `--json` 우선 사용, 경로를 id 로 해석, `CONFIG_*`, `API_*`, `SQL_*` 오류 복구가 필요할 때 우선 사용하세요
+
 ## 초기 설정
 
 CLI가 SiYuan과 통신하기 전에 두 가지 정보가 필요합니다:

@@ -137,6 +137,26 @@ sy system version --json
 
 `npm link` 是可选的。如果你愿意，也可以一直使用 `npm run dev -- ...`。
 
+## Agent Skill
+
+这个仓库还内置了一个随版本一起维护的 `siyuan-cli` skill，可用于 Codex 和 Claude Code。
+
+发现位置：
+
+- 共享来源：`skills/siyuan-cli/`
+- Codex 入口：`.codex/skills/siyuan-cli/`
+- Claude Code 入口：`.claude/skills/siyuan-cli/`
+
+安装方式：
+
+- 不需要单独下载，这个 skill 就在仓库里
+- 如果你的 agent 运行环境不会自动发现仓库内 skill，就把这些目录接入它的 skill 搜索路径，或复制到本地 skill 目录
+
+使用方式：
+
+- 当你希望 agent 通过这个 CLI 操作 SiYuan 时，可以直接要求它使用 `siyuan-cli` skill
+- 当需求涉及选命令、默认使用 `--json`、路径转 id，或处理 `CONFIG_*`、`API_*`、`SQL_*` 错误时，优先使用它
+
 ## 首次配置
 
 在这个 CLI 能够连接到 SiYuan 之前，你需要准备两项信息：
