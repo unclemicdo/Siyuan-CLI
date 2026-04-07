@@ -1,6 +1,6 @@
 # Siyuan CLI
 
-[中文说明](./README.zh-CN.md)
+[简体中文](./README.zh-CN.md) | [繁體中文](./README.zh-TW.md) | [Español](./README.es.md) | [한국어](./README.ko.md)
 
 Agent-first TypeScript CLI for SiYuan Note.
 

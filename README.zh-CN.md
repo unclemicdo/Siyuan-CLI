@@ -1,6 +1,6 @@
 # Siyuan CLI
 
-[English README](./README.md)
+[English](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文](./README.zh-TW.md) | [Español](./README.es.md) | [한국어](./README.ko.md)
 
 面向 SiYuan Note、以 Agent 为优先的 TypeScript CLI。
 

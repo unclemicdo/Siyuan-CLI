@@ -54,4 +54,30 @@ describe("bootstrap", () => {
     expect(englishReadme).toContain("export SIYUAN_TOKEN=your-token");
     expect(chineseReadme).toContain("export SIYUAN_TOKEN=your-token");
   });
+
+  it("keeps multilingual README navigation consistent", () => {
+    const englishReadme = readFileSync(resolve(process.cwd(), "README.md"), "utf8");
+    const simplifiedChineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-CN.md"),
+      "utf8"
+    );
+    const traditionalChineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-TW.md"),
+      "utf8"
+    );
+    const spanishReadme = readFileSync(resolve(process.cwd(), "README.es.md"), "utf8");
+    const koreanReadme = readFileSync(resolve(process.cwd(), "README.ko.md"), "utf8");
+
+    expect(englishReadme).toContain(
+      "[简体中文](./README.zh-CN.md) | [繁體中文](./README.zh-TW.md) | [Español](./README.es.md) | [한국어](./README.ko.md)"
+    );
+
+    const localizedNavigation =
+      "[English](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文](./README.zh-TW.md) | [Español](./README.es.md) | [한국어](./README.ko.md)";
+
+    expect(simplifiedChineseReadme).toContain(localizedNavigation);
+    expect(traditionalChineseReadme).toContain(localizedNavigation);
+    expect(spanishReadme).toContain(localizedNavigation);
+    expect(koreanReadme).toContain(localizedNavigation);
+  });
 });
