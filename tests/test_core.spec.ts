@@ -80,4 +80,56 @@ describe("bootstrap", () => {
     expect(spanishReadme).toContain(localizedNavigation);
     expect(koreanReadme).toContain(localizedNavigation);
   });
+
+  it("ships a shared siyuan-cli skill plus codex and claude compatibility entrypoints", () => {
+    const sharedSkill = resolve(process.cwd(), "skills/siyuan-cli/SKILL.md");
+    const codexSkill = resolve(process.cwd(), ".codex/skills/siyuan-cli/SKILL.md");
+    const claudeSkill = resolve(process.cwd(), ".claude/skills/siyuan-cli/SKILL.md");
+    const commandSelection = resolve(
+      process.cwd(),
+      "skills/siyuan-cli/references/command-selection.md"
+    );
+    const recipes = resolve(process.cwd(), "skills/siyuan-cli/references/recipes.md");
+    const errorHandling = resolve(
+      process.cwd(),
+      "skills/siyuan-cli/references/error-handling.md"
+    );
+    const openaiYaml = resolve(
+      process.cwd(),
+      "skills/siyuan-cli/agents/openai.yaml"
+    );
+
+    expect(() => readFileSync(sharedSkill, "utf8")).not.toThrow();
+    expect(() => readFileSync(codexSkill, "utf8")).not.toThrow();
+    expect(() => readFileSync(claudeSkill, "utf8")).not.toThrow();
+    expect(() => readFileSync(commandSelection, "utf8")).not.toThrow();
+    expect(() => readFileSync(recipes, "utf8")).not.toThrow();
+    expect(() => readFileSync(errorHandling, "utf8")).not.toThrow();
+    expect(() => readFileSync(openaiYaml, "utf8")).not.toThrow();
+  });
+
+  it("routes codex and claude entrypoints to the shared siyuan-cli skill", () => {
+    const sharedSkill = readFileSync(
+      resolve(process.cwd(), "skills/siyuan-cli/SKILL.md"),
+      "utf8"
+    );
+    const codexSkill = readFileSync(
+      resolve(process.cwd(), ".codex/skills/siyuan-cli/SKILL.md"),
+      "utf8"
+    );
+    const claudeSkill = readFileSync(
+      resolve(process.cwd(), ".claude/skills/siyuan-cli/SKILL.md"),
+      "utf8"
+    );
+
+    expect(sharedSkill).toContain("name: siyuan-cli");
+    expect(sharedSkill).toContain("references/command-selection.md");
+    expect(sharedSkill).toContain("references/recipes.md");
+    expect(sharedSkill).toContain("references/error-handling.md");
+
+    expect(codexSkill).toContain("skills/siyuan-cli/SKILL.md");
+    expect(claudeSkill).toContain("skills/siyuan-cli/SKILL.md");
+    expect(codexSkill).toContain("references/command-selection.md");
+    expect(claudeSkill).toContain("references/error-handling.md");
+  });
 });

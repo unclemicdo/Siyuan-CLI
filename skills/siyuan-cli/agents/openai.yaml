@@ -1,0 +1,5 @@
+interface:
+  display_name: "Siyuan CLI"
+  short_description: "Use the Siyuan CLI safely and efficiently"
+  default_prompt: "Use $siyuan-cli to choose the right Siyuan CLI commands, prefer JSON output, and recover cleanly from structured CLI failures."
+
