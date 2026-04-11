@@ -16,10 +16,10 @@
 
 | Need | Preferred command | Notes |
 | --- | --- | --- |
-| Create a new document at a known path | `doc create` | Use when the task is explicitly create-only. |
+| Create a new document at a known path | `doc create` | Use when the task is explicitly create-only. Prefer `--markdown-file` for multiline Markdown. |
 | Create-or-update a document at a path | `workflow doc-upsert` | Prefer for idempotent writing flows. |
 | Convert path to document id | `doc resolve-path` | Prefer before block mutations when only a path is known. |
-| Append text to known parent id | `block append` | Smallest direct mutation. |
+| Append text to known parent id | `block append` | Smallest direct mutation. Prefer `--data-file` for multiline Markdown. |
 | Update known block id | `block update` | Use when the target block id is already known. |
 | Perform many block operations | `workflow block-batch` | Prefer when the user wants batched structured results. |
 | Read-only analysis over note data | `sql query` | Keep queries read-only. |

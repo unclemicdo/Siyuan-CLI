@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
+import { resolveOptionalTextInput } from "../utils/text-input.js";
 
 export interface DocApi {
   create: (input: {
@@ -28,12 +29,14 @@ export function registerDocCommands(program: Command, deps: DocCommandDeps): voi
     .requiredOption("--notebook <id>")
     .requiredOption("--path <path>")
     .option("--markdown <markdown>")
+    .option("--markdown-file <path>")
     .option("--json")
     .action(
       async (options: {
         notebook: string;
         path: string;
         markdown?: string;
+        markdownFile?: string;
         json?: boolean;
       }) => {
         await executeCommand({
@@ -43,7 +46,12 @@ export function registerDocCommands(program: Command, deps: DocCommandDeps): voi
             deps.docApi.create({
               notebook: options.notebook,
               path: options.path,
-              markdown: options.markdown
+              markdown: resolveOptionalTextInput({
+                inline: options.markdown,
+                file: options.markdownFile,
+                inlineName: "--markdown",
+                fileName: "--markdown-file"
+              })
             }),
           write: deps.write
         });

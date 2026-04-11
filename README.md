@@ -54,10 +54,22 @@ Create a project note or daily note from the terminal:
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
 ```
 
+For multiline Markdown, prefer a file so shells do not write literal `\n` text:
+
+```bash
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
+```
+
 Append a follow-up note after a meeting or call:
 
 ```bash
 npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
+```
+
+For multiline block content, prefer `--data-file`:
+
+```bash
+npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
 ```
 
 Query note data in bulk when you need to inspect or organize content:

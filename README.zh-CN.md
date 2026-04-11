@@ -54,10 +54,22 @@ npm run dev -- notebook list --json
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
 ```
 
+多行 Markdown 建议使用文件输入，避免 shell 把 `\n` 当成字面文本写入：
+
+```bash
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
+```
+
 开完会后，给现有文档追加一条跟进记录：
 
 ```bash
 npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
+```
+
+多行块内容建议使用 `--data-file`：
+
+```bash
+npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
 ```
 
 当你需要批量查看或整理内容时，先跑一条 SQL 查询：

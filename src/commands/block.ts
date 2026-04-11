@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
+import { resolveRequiredTextInput } from "../utils/text-input.js";
 
 export interface BlockApi {
   get: (id: string) => Promise<unknown>;
@@ -60,13 +61,15 @@ export function registerBlockCommands(
   block
     .command("append")
     .requiredOption("--parent-id <id>")
-    .requiredOption("--data <value>")
+    .option("--data <value>")
+    .option("--data-file <path>")
     .option("--data-type <type>", "markdown or dom", "markdown")
     .option("--json")
     .action(
       async (options: {
         parentId: string;
-        data: string;
+        data?: string;
+        dataFile?: string;
         dataType: "markdown" | "dom";
         json?: boolean;
       }) => {
@@ -76,7 +79,12 @@ export function registerBlockCommands(
           action: () =>
             deps.blockApi.append({
               parentID: options.parentId,
-              data: options.data,
+              data: resolveRequiredTextInput({
+                inline: options.data,
+                file: options.dataFile,
+                inlineName: "--data",
+                fileName: "--data-file"
+              }),
               dataType: options.dataType
             }),
           write: deps.write

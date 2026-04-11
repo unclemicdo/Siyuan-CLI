@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createCli } from "../../src/cli.js";
 import { SiyuanClient } from "../../src/core/client.js";
 
@@ -156,6 +159,64 @@ describe("doc commands", () => {
         }
       })
     );
+  });
+
+  it("creates documents from markdown files while preserving real newlines", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-markdown-"));
+    const markdownPath = join(tempDir, "doc.md");
+    const markdown = [
+      "# SiYuan Agent Workbench E2E Test",
+      "",
+      "- status: `todo`",
+      "- owner: `agent`",
+      "- need_human: `false`",
+      "",
+      "## Task",
+      "验证 agent 安全写入、评论线程、PDCA 复盘追加。"
+    ].join("\n");
+    writeFileSync(markdownPath, markdown, "utf8");
+
+    const write = vi.fn(() => true);
+    const create = vi.fn(async (input: {
+      notebook: string;
+      path: string;
+      markdown?: string;
+    }) => ({ id: "doc-file", ...input }));
+
+    const cli = createCli({
+      docApi: {
+        create,
+        exportMarkdown: async () => ({ hPath: "/x", content: "" })
+      },
+      write
+    });
+    cli.exitOverride();
+
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "doc",
+        "create",
+        "--notebook",
+        "nb-1",
+        "--path",
+        "/Work/FileDoc",
+        "--markdown-file",
+        markdownPath,
+        "--json"
+      ]);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+
+    expect(create).toHaveBeenCalledWith({
+      notebook: "nb-1",
+      path: "/Work/FileDoc",
+      markdown
+    });
+    const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
+    expect(payload.data.markdown).toBe(markdown);
   });
 
   it("renames, moves, removes, and resolves documents through injected docApi methods", async () => {
@@ -375,6 +436,99 @@ describe("block commands", () => {
             dataType: "markdown"
           }
         ]
+      })
+    );
+  });
+
+  it("appends block content from data files while preserving real newlines", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-block-"));
+    const dataPath = join(tempDir, "block.md");
+    const data = [
+      "- source_block: `doc-1`",
+      "  author: `agent`",
+      "  comment_status: `open`",
+      "  body: 端到端测试：agent 追加评论块。"
+    ].join("\n");
+    writeFileSync(dataPath, data, "utf8");
+
+    const write = vi.fn(() => true);
+    const append = vi.fn(async (input: {
+      parentID: string;
+      data: string;
+      dataType: "markdown" | "dom";
+    }) => [{ id: "block-file", ...input }]);
+
+    const cli = createCli({
+      blockApi: {
+        get: async () => ({ id: "block-1" }),
+        append
+      },
+      write
+    });
+    cli.exitOverride();
+
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "append",
+        "--parent-id",
+        "doc-1",
+        "--data-file",
+        dataPath,
+        "--json"
+      ]);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+
+    expect(append).toHaveBeenCalledWith({
+      parentID: "doc-1",
+      data,
+      dataType: "markdown"
+    });
+    const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
+    expect(payload.data[0].data).toBe(data);
+  });
+
+  it("emits strict JSON for append responses containing multiline strings", async () => {
+    const write = vi.fn(() => true);
+    const append = vi.fn(async () => [
+      {
+        id: "block-2",
+        data: "<div>line 1\nline 2</div>"
+      }
+    ]);
+
+    const cli = createCli({
+      blockApi: {
+        get: async () => ({ id: "block-1" }),
+        append
+      },
+      write
+    });
+    cli.exitOverride();
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "block",
+      "append",
+      "--parent-id",
+      "doc-1",
+      "--data",
+      "line 1\nline 2",
+      "--json"
+    ]);
+
+    const output = String(write.mock.calls[0]?.[0] ?? "");
+    expect(output).toContain("\\n");
+    expect(JSON.parse(output)).toEqual(
+      expect.objectContaining({
+        ok: true,
+        command: "block.append",
+        data: [{ id: "block-2", data: "<div>line 1\nline 2</div>" }]
       })
     );
   });
