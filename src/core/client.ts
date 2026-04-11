@@ -114,6 +114,93 @@ export class SiyuanClient {
     return this.post("/api/attr/setBlockAttrs", { id, attrs });
   }
 
+  async getTags(payload: {
+    sort?: number;
+    app: string;
+    ignoreMaxListHint: boolean;
+  }): Promise<unknown> {
+    return this.post("/api/tag/getTag", payload);
+  }
+
+  async renameTag(oldLabel: string, newLabel: string): Promise<unknown> {
+    return this.post("/api/tag/renameTag", { oldLabel, newLabel });
+  }
+
+  async removeTag(label: string): Promise<unknown> {
+    return this.post("/api/tag/removeTag", { label });
+  }
+
+  async setDocTags(id: string, tags: string): Promise<unknown> {
+    return this.setBlockAttrs(id, { tags });
+  }
+
+  async refreshBacklink(id: string): Promise<unknown> {
+    return this.post("/api/ref/refreshBacklink", { id });
+  }
+
+  async getBacklink(payload: {
+    id: string;
+    k: string;
+    mk: string;
+    beforeLen: number;
+    containChildren?: boolean;
+  }): Promise<unknown> {
+    return this.post("/api/ref/getBacklink", payload);
+  }
+
+  async getBacklinkDoc(payload: {
+    defID: string;
+    refTreeID: string;
+    keyword: string;
+    containChildren?: boolean;
+    highlight?: boolean;
+  }): Promise<unknown> {
+    return this.post("/api/ref/getBacklinkDoc", payload);
+  }
+
+  async getBackmentionDoc(payload: {
+    defID: string;
+    refTreeID: string;
+    keyword: string;
+    containChildren?: boolean;
+    highlight?: boolean;
+  }): Promise<unknown> {
+    return this.post("/api/ref/getBackmentionDoc", payload);
+  }
+
+  async transferBlockRef(payload: {
+    fromID: string;
+    toID: string;
+    refIDs?: string[];
+  }): Promise<unknown> {
+    return this.post("/api/block/transferBlockRef", payload);
+  }
+
+  async getGraph(payload: {
+    k: string;
+    conf: Record<string, unknown>;
+    reqId: string;
+  }): Promise<unknown> {
+    return this.post("/api/graph/getGraph", payload);
+  }
+
+  async getLocalGraph(payload: {
+    id: string;
+    k: string;
+    conf: Record<string, unknown>;
+    reqId: string;
+  }): Promise<unknown> {
+    return this.post("/api/graph/getLocalGraph", payload);
+  }
+
+  async resetGraph(): Promise<unknown> {
+    return this.post("/api/graph/resetGraph", {});
+  }
+
+  async resetLocalGraph(): Promise<unknown> {
+    return this.post("/api/graph/resetLocalGraph", {});
+  }
+
   async querySql(stmt: string): Promise<unknown> {
     return this.post("/api/query/sql", { stmt });
   }
