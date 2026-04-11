@@ -145,17 +145,11 @@ sy system version --json
 
 - `skills/siyuan-cli/`
 
-저장소 내 호환 엔트리포인트:
+전역 설치:
 
-- Codex: `.codex/skills/siyuan-cli/`
-- Claude Code: `.claude/skills/siyuan-cli/`
-
-수동 설치:
-
-- `skills/siyuan-cli/` 만 로컬 스킬 디렉터리로 복사하세요
+- `skills/siyuan-cli/` 만 전역 스킬 디렉터리로 복사하세요
 - Codex 대상 경로: `~/.codex/skills/siyuan-cli/`
 - Claude Code 대상 경로: `~/.claude/skills/siyuan-cli/`
-- `.codex/skills/siyuan-cli/` 또는 `.claude/skills/siyuan-cli/` 만 따로 복사하지 마세요. 이들은 저장소 안의 얇은 래퍼입니다
 
 사용:
 

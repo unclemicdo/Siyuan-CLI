@@ -145,17 +145,11 @@ sy system version --json
 
 - `skills/siyuan-cli/`
 
-倉庫內相容入口：
+全域安裝：
 
-- Codex：`.codex/skills/siyuan-cli/`
-- Claude Code：`.claude/skills/siyuan-cli/`
-
-手動安裝：
-
-- 只複製 `skills/siyuan-cli/` 到你的本地 skill 目錄
+- 只複製 `skills/siyuan-cli/` 到你的全域 skill 目錄
 - Codex 目標路徑：`~/.codex/skills/siyuan-cli/`
 - Claude Code 目標路徑：`~/.claude/skills/siyuan-cli/`
-- 不要單獨複製 `.codex/skills/siyuan-cli/` 或 `.claude/skills/siyuan-cli/`；它們只是倉庫內的輕量入口
 
 使用方式：
 

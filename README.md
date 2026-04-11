@@ -157,17 +157,11 @@ Canonical source:
 
 - `skills/siyuan-cli/`
 
-Repo compatibility entrypoints:
+Global install:
 
-- Codex: `.codex/skills/siyuan-cli/`
-- Claude Code: `.claude/skills/siyuan-cli/`
-
-Manual install:
-
-- copy `skills/siyuan-cli/` into your local skill directory
+- copy `skills/siyuan-cli/` into your global skill directory
 - Codex target: `~/.codex/skills/siyuan-cli/`
 - Claude Code target: `~/.claude/skills/siyuan-cli/`
-- do not copy `.codex/skills/siyuan-cli/` or `.claude/skills/siyuan-cli/` by themselves; those are thin repo-local wrappers
 
 Usage:
 

@@ -145,17 +145,11 @@ Directorio fuente canónico:
 
 - `skills/siyuan-cli/`
 
-Entradas de compatibilidad dentro del repositorio:
+Instalación global:
 
-- Codex: `.codex/skills/siyuan-cli/`
-- Claude Code: `.claude/skills/siyuan-cli/`
-
-Instalación manual:
-
-- copia `skills/siyuan-cli/` a tu directorio local de skills
+- copia `skills/siyuan-cli/` a tu directorio global de skills
 - destino de Codex: `~/.codex/skills/siyuan-cli/`
 - destino de Claude Code: `~/.claude/skills/siyuan-cli/`
-- no copies por separado `.codex/skills/siyuan-cli/` ni `.claude/skills/siyuan-cli/`; esas rutas son solo wrappers ligeros dentro del repositorio
 
 Uso:
 

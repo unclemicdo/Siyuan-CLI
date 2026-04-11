@@ -102,8 +102,10 @@ describe("bootstrap", () => {
       koreanReadme
     ]) {
       expect(readme).toContain("skills/siyuan-cli/");
-      expect(readme).toContain(".codex/skills/siyuan-cli/");
-      expect(readme).toContain(".claude/skills/siyuan-cli/");
+      expect(readme).toContain("~/.codex/skills/siyuan-cli/");
+      expect(readme).toContain("~/.claude/skills/siyuan-cli/");
+      expect(readme).not.toContain("`.codex/skills/siyuan-cli/`");
+      expect(readme).not.toContain("`.claude/skills/siyuan-cli/`");
       expect(readme).toContain("siyuan-cli");
     }
   });
@@ -137,10 +139,8 @@ describe("bootstrap", () => {
     }
   });
 
-  it("ships a shared siyuan-cli skill plus codex and claude compatibility entrypoints", () => {
+  it("ships a shared siyuan-cli skill with its bundled references", () => {
     const sharedSkill = resolve(process.cwd(), "skills/siyuan-cli/SKILL.md");
-    const codexSkill = resolve(process.cwd(), ".codex/skills/siyuan-cli/SKILL.md");
-    const claudeSkill = resolve(process.cwd(), ".claude/skills/siyuan-cli/SKILL.md");
     const commandSelection = resolve(
       process.cwd(),
       "skills/siyuan-cli/references/command-selection.md"
@@ -156,25 +156,15 @@ describe("bootstrap", () => {
     );
 
     expect(() => readFileSync(sharedSkill, "utf8")).not.toThrow();
-    expect(() => readFileSync(codexSkill, "utf8")).not.toThrow();
-    expect(() => readFileSync(claudeSkill, "utf8")).not.toThrow();
     expect(() => readFileSync(commandSelection, "utf8")).not.toThrow();
     expect(() => readFileSync(recipes, "utf8")).not.toThrow();
     expect(() => readFileSync(errorHandling, "utf8")).not.toThrow();
     expect(() => readFileSync(openaiYaml, "utf8")).not.toThrow();
   });
 
-  it("routes codex and claude entrypoints to the shared siyuan-cli skill", () => {
+  it("keeps the shared siyuan-cli skill self-contained", () => {
     const sharedSkill = readFileSync(
       resolve(process.cwd(), "skills/siyuan-cli/SKILL.md"),
-      "utf8"
-    );
-    const codexSkill = readFileSync(
-      resolve(process.cwd(), ".codex/skills/siyuan-cli/SKILL.md"),
-      "utf8"
-    );
-    const claudeSkill = readFileSync(
-      resolve(process.cwd(), ".claude/skills/siyuan-cli/SKILL.md"),
       "utf8"
     );
 
@@ -182,10 +172,5 @@ describe("bootstrap", () => {
     expect(sharedSkill).toContain("references/command-selection.md");
     expect(sharedSkill).toContain("references/recipes.md");
     expect(sharedSkill).toContain("references/error-handling.md");
-
-    expect(codexSkill).toContain("skills/siyuan-cli/SKILL.md");
-    expect(claudeSkill).toContain("skills/siyuan-cli/SKILL.md");
-    expect(codexSkill).toContain("references/command-selection.md");
-    expect(claudeSkill).toContain("references/error-handling.md");
   });
 });
