@@ -78,6 +78,24 @@ Query note data in bulk when you need to inspect or organize content:
 npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
+Set native document tags using the official `tags` attribute on the document root:
+
+```bash
+npm run dev -- tag set-doc --id doc-1 --tags "AI Agent,PDCA,Knowledge Management" --json
+```
+
+Inspect backlinks and backmentions through the official reference APIs:
+
+```bash
+npm run dev -- ref backlinks --id block-1 --json
+```
+
+Query the official local graph for a document:
+
+```bash
+npm run dev -- graph local --id doc-1 --query "" --json
+```
+
 Generate a simple report from SQL output for downstream workflows:
 
 ```bash
@@ -265,6 +283,12 @@ Blank environment variable values are treated as unset and fall back to the next
 
 ## What You Can Do Today
 
+Official repo semantics verified for knowledge management:
+
+- native document tags are stored on the document root `tags` attribute
+- backlinks and backmentions are served by the official `ref` APIs
+- graph data is served by the official global and local `graph` APIs
+
 Top-level commands:
 
 - `system`
@@ -272,6 +296,9 @@ Top-level commands:
 - `doc`
 - `block`
 - `attr`
+- `tag`
+- `ref`
+- `graph`
 - `sql`
 - `workflow`
 - `repl`
@@ -301,6 +328,18 @@ Implemented subcommands today:
 - `block remove`
 - `attr get`
 - `attr set`
+- `tag list`
+- `tag rename`
+- `tag remove`
+- `tag set-doc`
+- `ref refresh`
+- `ref backlinks`
+- `ref doc-backlinks`
+- `ref doc-backmentions`
+- `ref transfer`
+- `graph global`
+- `graph local`
+- `graph reset`
 - `sql query`
 - `sql explain-safety`
 - `workflow doc-upsert`

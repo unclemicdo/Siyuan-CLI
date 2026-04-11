@@ -21,6 +21,21 @@ import {
   type WorkflowApi,
   type WorkflowCommandDeps
 } from "./commands/workflow.js";
+import {
+  registerTagCommands,
+  type TagApi,
+  type TagCommandDeps
+} from "./commands/tag.js";
+import {
+  registerRefCommands,
+  type RefApi,
+  type RefCommandDeps
+} from "./commands/ref.js";
+import {
+  registerGraphCommands,
+  type GraphApi,
+  type GraphCommandDeps
+} from "./commands/graph.js";
 import { createReplState, startRepl } from "./repl/repl.js";
 import {
   registerSystemCommands,
@@ -42,7 +57,10 @@ export interface CliDeps
     DocCommandDeps,
     BlockCommandDeps,
     AttrCommandDeps,
-    WorkflowCommandDeps {}
+    WorkflowCommandDeps,
+    TagCommandDeps,
+    RefCommandDeps,
+    GraphCommandDeps {}
 
 export interface CliDepsInput {
   systemApi?: SystemApi;
@@ -52,6 +70,9 @@ export interface CliDepsInput {
   blockApi?: Partial<BlockApi>;
   attrApi?: Partial<AttrApi>;
   workflowApi?: Partial<WorkflowApi>;
+  tagApi?: Partial<TagApi>;
+  refApi?: Partial<RefApi>;
+  graphApi?: Partial<GraphApi>;
   write?: (value: string) => boolean;
 }
 
@@ -77,6 +98,9 @@ export function createCli(input: CliDepsInput = {}): Command {
   registerAttrCommandGroup(program, deps);
   registerSqlCommands(program, deps);
   registerWorkflowCommands(program, deps);
+  registerTagCommands(program, deps);
+  registerRefCommands(program, deps);
+  registerGraphCommands(program, deps);
 
   program
     .command("repl")
@@ -121,6 +145,9 @@ function createDeps(
   const defaultBlockApi = createDefaultBlockApi(createClient);
   const defaultAttrApi = createDefaultAttrApi(createClient);
   const defaultWorkflowApi = createDefaultWorkflowApi(createClient);
+  const defaultTagApi = createDefaultTagApi(createClient);
+  const defaultRefApi = createDefaultRefApi(createClient);
+  const defaultGraphApi = createDefaultGraphApi(createClient);
 
   const systemApi = input.systemApi
     ? bindSystemApi(input.systemApi)
@@ -139,6 +166,11 @@ function createDeps(
   const workflowApi = input.workflowApi
     ? bindWorkflowApi(input.workflowApi, defaultWorkflowApi)
     : defaultWorkflowApi;
+  const tagApi = input.tagApi ? bindTagApi(input.tagApi, defaultTagApi) : defaultTagApi;
+  const refApi = input.refApi ? bindRefApi(input.refApi, defaultRefApi) : defaultRefApi;
+  const graphApi = input.graphApi
+    ? bindGraphApi(input.graphApi, defaultGraphApi)
+    : defaultGraphApi;
 
   return {
     systemApi,
@@ -148,6 +180,9 @@ function createDeps(
     attrApi,
     sqlApi,
     workflowApi,
+    tagApi,
+    refApi,
+    graphApi,
     write: input.write ?? ((value) => process.stdout.write(value))
   };
 }
@@ -315,6 +350,49 @@ function createDefaultWorkflowApi(createClient: () => SiyuanClient): WorkflowApi
   };
 }
 
+function createDefaultTagApi(createClient: () => SiyuanClient): TagApi {
+  return {
+    list: async (input) => createClient().getTags(input),
+    rename: async (oldLabel: string, newLabel: string) => {
+      await createClient().renameTag(oldLabel, newLabel);
+      return { oldLabel, newLabel };
+    },
+    remove: async (label: string) => {
+      await createClient().removeTag(label);
+      return { label, removed: true };
+    },
+    setDocTags: async (id: string, tags: string) => {
+      await createClient().setDocTags(id, tags);
+      return { id, tags };
+    }
+  };
+}
+
+function createDefaultRefApi(createClient: () => SiyuanClient): RefApi {
+  return {
+    refresh: async (id: string) => {
+      await createClient().refreshBacklink(id);
+      return { id, refreshed: true };
+    },
+    backlinks: async (input) => createClient().getBacklink(input),
+    docBacklinks: async (input) => createClient().getBacklinkDoc(input),
+    docBackmentions: async (input) => createClient().getBackmentionDoc(input),
+    transfer: async (input) => {
+      await createClient().transferBlockRef(input);
+      return input;
+    }
+  };
+}
+
+function createDefaultGraphApi(createClient: () => SiyuanClient): GraphApi {
+  return {
+    global: async (input) => createClient().getGraph(input),
+    local: async (input) => createClient().getLocalGraph(input),
+    resetGlobal: async () => createClient().resetGraph(),
+    resetLocal: async () => createClient().resetLocalGraph()
+  };
+}
+
 function bindSystemApi(systemApi: SystemApi): SystemApi {
   return {
     version: systemApi.version.bind(systemApi),
@@ -382,6 +460,34 @@ function bindWorkflowApi(
     appendBlock: workflowApi.appendBlock?.bind(workflowApi) ?? fallback.appendBlock,
     updateBlock: workflowApi.updateBlock?.bind(workflowApi) ?? fallback.updateBlock,
     query: workflowApi.query?.bind(workflowApi) ?? fallback.query
+  };
+}
+
+function bindTagApi(tagApi: Partial<TagApi>, fallback: TagApi): TagApi {
+  return {
+    list: tagApi.list?.bind(tagApi) ?? fallback.list,
+    rename: tagApi.rename?.bind(tagApi) ?? fallback.rename,
+    remove: tagApi.remove?.bind(tagApi) ?? fallback.remove,
+    setDocTags: tagApi.setDocTags?.bind(tagApi) ?? fallback.setDocTags
+  };
+}
+
+function bindRefApi(refApi: Partial<RefApi>, fallback: RefApi): RefApi {
+  return {
+    refresh: refApi.refresh?.bind(refApi) ?? fallback.refresh,
+    backlinks: refApi.backlinks?.bind(refApi) ?? fallback.backlinks,
+    docBacklinks: refApi.docBacklinks?.bind(refApi) ?? fallback.docBacklinks,
+    docBackmentions: refApi.docBackmentions?.bind(refApi) ?? fallback.docBackmentions,
+    transfer: refApi.transfer?.bind(refApi) ?? fallback.transfer
+  };
+}
+
+function bindGraphApi(graphApi: Partial<GraphApi>, fallback: GraphApi): GraphApi {
+  return {
+    global: graphApi.global?.bind(graphApi) ?? fallback.global,
+    local: graphApi.local?.bind(graphApi) ?? fallback.local,
+    resetGlobal: graphApi.resetGlobal?.bind(graphApi) ?? fallback.resetGlobal,
+    resetLocal: graphApi.resetLocal?.bind(graphApi) ?? fallback.resetLocal
   };
 }
 

@@ -18,5 +18,6 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 ## Routing
 
 - Read `references/command-selection.md` when choosing commands.
+- Read `references/knowledge-management.md` when the task is about tags, backlinks, backmentions, graph queries, or block-ref migration.
 - Read `references/recipes.md` when the task spans multiple CLI steps.
 - Read `references/error-handling.md` when setup is uncertain or a command fails.

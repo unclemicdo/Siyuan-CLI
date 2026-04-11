@@ -78,6 +78,24 @@ npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
 npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
+使用官方原生 `tags` 属性给文档设置标签：
+
+```bash
+npm run dev -- tag set-doc --id doc-1 --tags "AI Agent,PDCA,知识管理" --json
+```
+
+通过官方反链 API 查看反链和提及：
+
+```bash
+npm run dev -- ref backlinks --id block-1 --json
+```
+
+通过官方图谱 API 获取某篇文档的本地图谱：
+
+```bash
+npm run dev -- graph local --id doc-1 --query "" --json
+```
+
 把 SQL 结果整理成一个可继续处理的简单报告：
 
 ```bash
@@ -265,6 +283,12 @@ token 解析优先级：
 
 ## 目前可以做什么
 
+已经根据思源官方仓库核实的知识管理语义：
+
+- 文档原生标签落在文档根块的 `tags` 属性
+- 反链和提及走官方 `ref` API
+- 全局图谱和本地图谱走官方 `graph` API
+
 顶层命令：
 
 - `system`
@@ -272,6 +296,9 @@ token 解析优先级：
 - `doc`
 - `block`
 - `attr`
+- `tag`
+- `ref`
+- `graph`
 - `sql`
 - `workflow`
 - `repl`
@@ -301,6 +328,18 @@ token 解析优先级：
 - `block remove`
 - `attr get`
 - `attr set`
+- `tag list`
+- `tag rename`
+- `tag remove`
+- `tag set-doc`
+- `ref refresh`
+- `ref backlinks`
+- `ref doc-backlinks`
+- `ref doc-backmentions`
+- `ref transfer`
+- `graph global`
+- `graph local`
+- `graph reset`
 - `sql query`
 - `sql explain-safety`
 - `workflow doc-upsert`
