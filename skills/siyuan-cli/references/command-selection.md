@@ -11,6 +11,7 @@
 - Verify connectivity with `sy system version --json` when `sy` is available.
 - Otherwise run `npm run dev -- system version --json` from the repository root.
 - If the task depends on existing content and the user only provides a readable path, resolve it before mutation.
+- If the task is about tags, backlinks, backmentions, graph views, or ref transfer, read `knowledge-management.md`.
 
 ## Preferred command mapping
 
@@ -23,5 +24,6 @@
 | Update known block id | `block update` | Use when the target block id is already known. |
 | Perform many block operations | `workflow block-batch` | Prefer when the user wants batched structured results. |
 | Read-only analysis over note data | `sql query` | Keep queries read-only. |
+| Tags, backlinks, graph, or ref transfer | See `knowledge-management.md` | Use the dedicated knowledge-management reference for command choice and examples. |
 | Produce structured report output from SQL | `workflow sql-report` | Prefer when rows need downstream summarization. |
 | Interactive exploration | `repl` | Prefer only for human-guided exploration, not normal automation. |
