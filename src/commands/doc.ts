@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
+import { cleanupInputFile } from "../utils/input-file-cleanup.js";
 import { resolveOptionalTextInput } from "../utils/text-input.js";
 
 export interface DocApi {
@@ -30,6 +31,7 @@ export function registerDocCommands(program: Command, deps: DocCommandDeps): voi
     .requiredOption("--path <path>")
     .option("--markdown <markdown>")
     .option("--markdown-file <path>")
+    .option("--cleanup-input-file")
     .option("--json")
     .action(
       async (options: {
@@ -37,22 +39,32 @@ export function registerDocCommands(program: Command, deps: DocCommandDeps): voi
         path: string;
         markdown?: string;
         markdownFile?: string;
+        cleanupInputFile?: boolean;
         json?: boolean;
       }) => {
+        const markdown = resolveOptionalTextInput({
+          inline: options.markdown,
+          file: options.markdownFile,
+          inlineName: "--markdown",
+          fileName: "--markdown-file"
+        });
+
         await executeCommand({
           command: "doc.create",
           json: options.json,
-          action: () =>
-            deps.docApi.create({
+          action: async () => {
+            const data = await deps.docApi.create({
               notebook: options.notebook,
               path: options.path,
-              markdown: resolveOptionalTextInput({
-                inline: options.markdown,
-                file: options.markdownFile,
-                inlineName: "--markdown",
-                fileName: "--markdown-file"
-              })
-            }),
+              markdown
+            });
+
+            if (options.cleanupInputFile && options.markdownFile) {
+              cleanupInputFile(options.markdownFile);
+            }
+
+            return data;
+          },
           write: deps.write
         });
       }

@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
+import { cleanupInputFile } from "../utils/input-file-cleanup.js";
 import { resolveRequiredTextInput } from "../utils/text-input.js";
 
 export interface BlockApi {
@@ -63,6 +64,7 @@ export function registerBlockCommands(
     .requiredOption("--parent-id <id>")
     .option("--data <value>")
     .option("--data-file <path>")
+    .option("--cleanup-input-file")
     .option("--data-type <type>", "markdown or dom", "markdown")
     .option("--json")
     .action(
@@ -70,23 +72,33 @@ export function registerBlockCommands(
         parentId: string;
         data?: string;
         dataFile?: string;
+        cleanupInputFile?: boolean;
         dataType: "markdown" | "dom";
         json?: boolean;
       }) => {
+        const data = resolveRequiredTextInput({
+          inline: options.data,
+          file: options.dataFile,
+          inlineName: "--data",
+          fileName: "--data-file"
+        });
+
         await executeCommand({
           command: "block.append",
           json: options.json,
-          action: () =>
-            deps.blockApi.append({
+          action: async () => {
+            const result = await deps.blockApi.append({
               parentID: options.parentId,
-              data: resolveRequiredTextInput({
-                inline: options.data,
-                file: options.dataFile,
-                inlineName: "--data",
-                fileName: "--data-file"
-              }),
+              data,
               dataType: options.dataType
-            }),
+            });
+
+            if (options.cleanupInputFile && options.dataFile) {
+              cleanupInputFile(options.dataFile);
+            }
+
+            return result;
+          },
           write: deps.write
         });
       }

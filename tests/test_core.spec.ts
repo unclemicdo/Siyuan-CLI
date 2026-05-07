@@ -173,4 +173,47 @@ describe("bootstrap", () => {
     expect(sharedSkill).toContain("references/recipes.md");
     expect(sharedSkill).toContain("references/error-handling.md");
   });
+
+  it("documents simplified siyuan-cli execution defaults and tag routing clearly", () => {
+    const sharedSkill = readFileSync(
+      resolve(process.cwd(), "skills/siyuan-cli/SKILL.md"),
+      "utf8"
+    );
+    const commandSelection = readFileSync(
+      resolve(process.cwd(), "skills/siyuan-cli/references/command-selection.md"),
+      "utf8"
+    );
+    const recipes = readFileSync(
+      resolve(process.cwd(), "skills/siyuan-cli/references/recipes.md"),
+      "utf8"
+    );
+    const knowledge = readFileSync(
+      resolve(process.cwd(), "skills/siyuan-cli/references/knowledge-management.md"),
+      "utf8"
+    );
+    const errorHandling = readFileSync(
+      resolve(process.cwd(), "skills/siyuan-cli/references/error-handling.md"),
+      "utf8"
+    );
+    const openaiYaml = readFileSync(
+      resolve(process.cwd(), "skills/siyuan-cli/agents/openai.yaml"),
+      "utf8"
+    );
+
+    expect(sharedSkill).toContain("If global `sy ...` is installed and available");
+    expect(sharedSkill).toContain("If global `sy ...` is not available, fall back to `npm run dev -- ...`");
+    expect(sharedSkill).toContain("Prefer `--markdown-file` or `--data-file` for multiline Markdown");
+    expect(sharedSkill).toContain("If the file was generated just for this run, add `--cleanup-input-file`");
+    expect(commandSelection).toContain("Prefer global `sy ...` when it is installed");
+    expect(commandSelection).toContain("If global `sy ...` is unavailable");
+    expect(commandSelection).toContain("Prefer `doc create --markdown-file`");
+    expect(commandSelection).toContain("Prefer `workflow doc-upsert` only when the write is create-or-append text");
+    expect(recipes).toContain("If `doc resolve-path` returns `null`, do not continue to `block append`");
+    expect(knowledge).toContain("writes the document root `tags` attribute");
+    expect(knowledge).toContain("verify document tag writes");
+    expect(errorHandling).toContain("## `VALIDATION_*`");
+    expect(errorHandling).toContain("unknown option");
+    expect(openaiYaml).toContain("prefer global `sy ...` when it is available");
+    expect(openaiYaml).toContain("knowledge-management.md");
+  });
 });

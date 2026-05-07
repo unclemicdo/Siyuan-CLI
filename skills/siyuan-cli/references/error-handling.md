@@ -41,6 +41,22 @@ Action:
 - narrow the query to `SELECT`-only
 - do not retry mutation SQL through `sql query`
 
+## `VALIDATION_*`
+
+- `unknown option`: command spelling or flags do not match the current CLI
+- `VALIDATION_MISSING_INPUT`: a required `--data`, `--data-file`, `--markdown`, `--markdown-file`, or similar input is missing
+- `VALIDATION_CONFLICTING_OPTIONS`: mutually exclusive flags were passed together
+- `VALIDATION_INVALID_JSON`: structured JSON input such as `--attrs`, `--operations`, or `--conf` is malformed
+- `VALIDATION_FILE_READ_FAILED`: the referenced input file does not exist or cannot be read
+- `VALIDATION_FILE_DELETE_FAILED`: a requested cleanup step could not delete the temporary input file
+
+Action:
+
+- confirm the command and subcommand name first
+- confirm flags against the current repository command implementation
+- if global `sy ...` is unavailable, retry through `npm run dev -- ...` from the repository root
+- if the task uses structured input files, check that the path exists and that the file was meant to be ephemeral before retrying cleanup
+
 ## When to stop and ask the user
 
 - when the target path or notebook is ambiguous

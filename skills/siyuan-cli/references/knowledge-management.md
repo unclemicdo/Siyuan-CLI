@@ -6,6 +6,20 @@ Keep this reference command-oriented. It is for accurate CLI selection and invoc
 
 ## Tags
 
+For fast agent lookup:
+
+- write or replace tags on one document: `sy tag set-doc --id <doc-id> ... --json`
+- clear tags on one document: `sy tag set-doc --id <doc-id> --clear --json`
+- rename one label globally: `sy tag rename --old-label <label> --new-label <label> --json`
+- remove one label globally: `sy tag remove --label <label> --json`
+- inspect current tag index: `sy tag list --json`
+
+Agent note:
+
+- `tag set-doc` writes the document root `tags` attribute, not a separate tag-id resource
+- verify document tag writes with `sy attr get --id <doc-id> --json`
+- verify tag index visibility with `sy tag list --json`
+
 ### Scene
 
 List existing tags.

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createCli } from "../../src/cli.js";
@@ -217,6 +217,99 @@ describe("doc commands", () => {
     });
     const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
     expect(payload.data.markdown).toBe(markdown);
+  });
+
+  it("removes markdown input files after successful create when cleanup is requested", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-markdown-cleanup-"));
+    const markdownPath = join(tempDir, "doc.md");
+    writeFileSync(markdownPath, "# Cleanup", "utf8");
+
+    const write = vi.fn(() => true);
+    const create = vi.fn(async (input: {
+      notebook: string;
+      path: string;
+      markdown?: string;
+    }) => ({ id: "doc-clean", ...input }));
+
+    const cli = createCli({
+      docApi: {
+        create,
+        exportMarkdown: async () => ({ hPath: "/x", content: "" })
+      },
+      write
+    });
+    cli.exitOverride();
+
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "doc",
+        "create",
+        "--notebook",
+        "nb-1",
+        "--path",
+        "/Work/CleanupDoc",
+        "--markdown-file",
+        markdownPath,
+        "--cleanup-input-file",
+        "--json"
+      ]);
+
+      expect(existsSync(markdownPath)).toBe(false);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+
+    expect(create).toHaveBeenCalledWith({
+      notebook: "nb-1",
+      path: "/Work/CleanupDoc",
+      markdown: "# Cleanup"
+    });
+  });
+
+  it("keeps markdown input files when create fails even if cleanup is requested", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-markdown-keep-"));
+    const markdownPath = join(tempDir, "doc.md");
+    writeFileSync(markdownPath, "# Keep", "utf8");
+
+    const write = vi.fn(() => true);
+    const create = vi.fn(async () => {
+      throw new Error("boom");
+    });
+
+    const cli = createCli({
+      docApi: {
+        create,
+        exportMarkdown: async () => ({ hPath: "/x", content: "" })
+      },
+      write
+    });
+    cli.exitOverride();
+
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "doc",
+        "create",
+        "--notebook",
+        "nb-1",
+        "--path",
+        "/Work/KeepDoc",
+        "--markdown-file",
+        markdownPath,
+        "--cleanup-input-file",
+        "--json"
+      ]);
+
+      expect(existsSync(markdownPath)).toBe(true);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+
+    const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
+    expect(payload.ok).toBe(false);
   });
 
   it("renames, moves, removes, and resolves documents through injected docApi methods", async () => {
@@ -490,6 +583,95 @@ describe("block commands", () => {
     });
     const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
     expect(payload.data[0].data).toBe(data);
+  });
+
+  it("removes block input files after successful append when cleanup is requested", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-block-cleanup-"));
+    const dataPath = join(tempDir, "block.md");
+    writeFileSync(dataPath, "cleanup block", "utf8");
+
+    const write = vi.fn(() => true);
+    const append = vi.fn(async (input: {
+      parentID: string;
+      data: string;
+      dataType: "markdown" | "dom";
+    }) => [{ id: "block-clean", ...input }]);
+
+    const cli = createCli({
+      blockApi: {
+        get: async () => ({ id: "block-1" }),
+        append
+      },
+      write
+    });
+    cli.exitOverride();
+
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "append",
+        "--parent-id",
+        "doc-1",
+        "--data-file",
+        dataPath,
+        "--cleanup-input-file",
+        "--json"
+      ]);
+
+      expect(existsSync(dataPath)).toBe(false);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+
+    expect(append).toHaveBeenCalledWith({
+      parentID: "doc-1",
+      data: "cleanup block",
+      dataType: "markdown"
+    });
+  });
+
+  it("keeps block input files when append fails even if cleanup is requested", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-block-keep-"));
+    const dataPath = join(tempDir, "block.md");
+    writeFileSync(dataPath, "keep block", "utf8");
+
+    const write = vi.fn(() => true);
+    const append = vi.fn(async () => {
+      throw new Error("append boom");
+    });
+
+    const cli = createCli({
+      blockApi: {
+        get: async () => ({ id: "block-1" }),
+        append
+      },
+      write
+    });
+    cli.exitOverride();
+
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "append",
+        "--parent-id",
+        "doc-1",
+        "--data-file",
+        dataPath,
+        "--cleanup-input-file",
+        "--json"
+      ]);
+
+      expect(existsSync(dataPath)).toBe(true);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+
+    const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
+    expect(payload.ok).toBe(false);
   });
 
   it("emits strict JSON for append responses containing multiline strings", async () => {

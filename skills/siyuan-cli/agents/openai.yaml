@@ -1,5 +1,4 @@
 interface:
   display_name: "Siyuan CLI"
   short_description: "Use the Siyuan CLI safely and efficiently"
-  default_prompt: "Use $siyuan-cli to choose the right Siyuan CLI commands, prefer JSON output, and recover cleanly from structured CLI failures."
-
+  default_prompt: "Use $siyuan-cli to choose the right Siyuan CLI commands, prefer JSON output, prefer global `sy ...` when it is available, fall back to `npm run dev -- ...` when global `sy ...` is unavailable, use file-based input for multiline Markdown, add `--cleanup-input-file` for agent-generated one-off files, consult `knowledge-management.md` for tags/backlinks/graph commands, and recover cleanly from structured CLI failures."

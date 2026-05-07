@@ -60,6 +60,12 @@ For multiline Markdown, prefer a file so shells do not write literal `\n` text:
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
 ```
 
+If the Markdown file is agent-generated and only needed for this write, add `--cleanup-input-file` to delete it after a successful write:
+
+```bash
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file /tmp/note.md --cleanup-input-file --json
+```
+
 Append a follow-up note after a meeting or call:
 
 ```bash
@@ -72,6 +78,12 @@ For multiline block content, prefer `--data-file`:
 npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
 ```
 
+For agent-generated one-off input files, add `--cleanup-input-file` to remove the file after a successful append:
+
+```bash
+npm run dev -- block append --parent-id doc-1 --data-file /tmp/comment.md --cleanup-input-file --json
+```
+
 Query note data in bulk when you need to inspect or organize content:
 
 ```bash
@@ -82,6 +94,18 @@ Set native document tags using the official `tags` attribute on the document roo
 
 ```bash
 npm run dev -- tag set-doc --id doc-1 --tags "AI Agent,PDCA,Knowledge Management" --json
+```
+
+Update one tag label everywhere it appears:
+
+```bash
+npm run dev -- tag rename --old-label "AI Agent" --new-label "AI协作" --json
+```
+
+Remove one tag from the knowledge base:
+
+```bash
+npm run dev -- tag remove --label "Deprecated Tag" --json
 ```
 
 Inspect backlinks and backmentions through the official reference APIs:
