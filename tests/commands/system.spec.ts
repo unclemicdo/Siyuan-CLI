@@ -410,6 +410,160 @@ describe("siyuan client", () => {
       force: true
     });
   });
+
+  it("calls official AV, template, asset, export, and path helper endpoints", async () => {
+    const post = vi.fn(async () => {
+      const response: AxiosResponse<{ code: number; msg: string; data: {} }> = {
+        data: {
+          code: 0,
+          msg: "ok",
+          data: {}
+        },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: { headers: {} }
+      };
+      return response;
+    });
+    const client = new SiyuanClient({ post } as never);
+    const assetDir = mkdtempSync(join(tmpdir(), "siyuan-cli-asset-"));
+    const assetPath = join(assetDir, "example.txt");
+    writeFileSync(assetPath, "test");
+
+    await client.getAttributeView("av-1");
+    await client.getAttributeViewKeysByAvID("av-1");
+    await client.renderAttributeView({ id: "av-1", page: 1 });
+    await client.setAttributeViewBlockAttr({
+      avID: "av-1",
+      keyID: "key-1",
+      rowID: "row-1",
+      value: { text: { content: "done" } }
+    });
+    await client.addAttributeViewKey({
+      avID: "av-1",
+      keyID: "key-2",
+      keyName: "Status",
+      keyType: "select",
+      keyIcon: "",
+      previousKeyID: ""
+    });
+    await client.updateAttributeViewKey({
+      avID: "av-1",
+      keyID: "key-2",
+      keyName: "State",
+      keyIcon: "",
+      previousKeyID: ""
+    });
+    await client.removeAttributeViewKey({
+      avID: "av-1",
+      keyID: "key-2",
+      removeRelationDest: true
+    });
+    await client.renderTemplate({
+      id: "doc-1",
+      path: "/data/templates/daily.md",
+      preview: true
+    });
+    await client.renderSprig({
+      template: "{{ .title }}"
+    });
+    await client.uploadAsset({
+      filePath: assetPath,
+      uploadName: "renamed.txt"
+    });
+    await client.exportResources({ paths: ["/data/assets/example.png"] });
+    await client.getHPathByPath({ notebook: "nb-1", path: "/Projects/Doc" });
+    await client.getHPathByID("doc-1");
+    await client.getBlockInfo("block-1");
+
+    expect(post).toHaveBeenNthCalledWith(1, "/api/av/getAttributeView", {
+      id: "av-1"
+    });
+    expect(post).toHaveBeenNthCalledWith(2, "/api/av/getAttributeViewKeysByAvID", {
+      avID: "av-1"
+    });
+    expect(post).toHaveBeenNthCalledWith(3, "/api/av/renderAttributeView", {
+      id: "av-1",
+      page: 1
+    });
+    expect(post).toHaveBeenNthCalledWith(4, "/api/av/setAttributeViewBlockAttr", {
+      avID: "av-1",
+      keyID: "key-1",
+      rowID: "row-1",
+      value: { text: { content: "done" } }
+    });
+    expect(post).toHaveBeenNthCalledWith(5, "/api/av/addAttributeViewKey", {
+      avID: "av-1",
+      keyID: "key-2",
+      keyName: "Status",
+      keyType: "select",
+      keyIcon: "",
+      previousKeyID: ""
+    });
+    expect(post).toHaveBeenNthCalledWith(6, "/api/av/updateAttributeViewKey", {
+      avID: "av-1",
+      keyID: "key-2",
+      keyName: "State",
+      keyIcon: "",
+      previousKeyID: ""
+    });
+    expect(post).toHaveBeenNthCalledWith(7, "/api/av/removeAttributeViewKey", {
+      avID: "av-1",
+      keyID: "key-2",
+      removeRelationDest: true
+    });
+    expect(post).toHaveBeenNthCalledWith(8, "/api/template/render", {
+      id: "doc-1",
+      path: "/data/templates/daily.md",
+      preview: true
+    });
+    expect(post).toHaveBeenNthCalledWith(9, "/api/template/renderSprig", {
+      template: "{{ .title }}"
+    });
+    expect(post).toHaveBeenNthCalledWith(
+      10,
+      "/api/asset/upload",
+      expect.any(FormData),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "Content-Type": undefined
+        })
+      })
+    );
+    expect(post).toHaveBeenNthCalledWith(11, "/api/export/exportResources", {
+      paths: ["/data/assets/example.png"]
+    });
+    expect(post).toHaveBeenNthCalledWith(12, "/api/filetree/getHPathByPath", {
+      notebook: "nb-1",
+      path: "/Projects/Doc"
+    });
+    expect(post).toHaveBeenNthCalledWith(13, "/api/filetree/getHPathByID", {
+      id: "doc-1"
+    });
+    expect(post).toHaveBeenNthCalledWith(14, "/api/block/getBlockInfo", {
+      id: "block-1"
+    });
+
+    const uploadCall = post.mock.calls[9];
+    const uploadBody = uploadCall?.[2 - 1];
+    const uploadOptions = uploadCall?.[2];
+
+    expect(uploadBody).toBeInstanceOf(FormData);
+    expect(uploadOptions).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "Content-Type": undefined
+        })
+      })
+    );
+
+    const fileField = (uploadBody as FormData).get("file[]");
+    expect(fileField).toBeInstanceOf(File);
+    expect((fileField as File).name).toBe("renamed.txt");
+
+    rmSync(assetDir, { recursive: true, force: true });
+  });
 });
 
 describe("system command", () => {
@@ -431,6 +585,22 @@ describe("system command", () => {
       ])
     );
     expect(rootOptions).not.toContain("--token");
+  });
+
+  it("registers planned top-level command groups", () => {
+    const cli = createCli();
+    const topLevelCommands = cli.commands.map((command) => command.name());
+
+    expect(topLevelCommands).toEqual(
+      expect.arrayContaining([
+        "av",
+        "template",
+        "file",
+        "asset",
+        "path",
+        "export"
+      ])
+    );
   });
 
   it("writes structured JSON for system version", async () => {
@@ -763,5 +933,18 @@ describe("system command", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toContain('"code":"API_NETWORK_ERROR"');
     expect(result.stdout).not.toContain('"code":"CONFIG_MISSING_TOKEN"');
+  });
+
+  it("treats an empty-body av update response as success", async () => {
+    const post = vi.fn(async () => ({ data: "" }));
+    const client = new SiyuanClient({ post } as never);
+
+    await expect(
+      client.updateAttributeViewKey({
+        avID: "av-1",
+        keyID: "key-1",
+        keyName: "State"
+      })
+    ).resolves.toBeNull();
   });
 });

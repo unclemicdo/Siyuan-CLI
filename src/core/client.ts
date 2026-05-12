@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
 import { isAxiosError, type AxiosInstance } from "axios";
 import { SiyuanCliError } from "./errors.js";
 import type { SiyuanEnvelope } from "./types.js";
@@ -56,12 +58,34 @@ export class SiyuanClient {
     });
   }
 
+  async getHPathByPath(payload: {
+    notebook?: string;
+    path: string;
+  }): Promise<unknown> {
+    return this.post("/api/filetree/getHPathByPath", payload);
+  }
+
+  async getHPathByID(id: string): Promise<unknown> {
+    return this.post("/api/filetree/getHPathByID", { id });
+  }
+
   async exportMarkdown(id: string): Promise<unknown> {
     return this.post("/api/export/exportMdContent", { id });
   }
 
+  async exportResources(payload: {
+    paths: string[];
+    name?: string;
+  }): Promise<unknown> {
+    return this.post("/api/export/exportResources", payload);
+  }
+
   async getBlockKramdown(id: string): Promise<unknown> {
     return this.post("/api/block/getBlockKramdown", { id });
+  }
+
+  async getBlockInfo(id: string): Promise<unknown> {
+    return this.post("/api/block/getBlockInfo", { id });
   }
 
   async appendBlock(payload: {
@@ -114,6 +138,67 @@ export class SiyuanClient {
     return this.post("/api/attr/setBlockAttrs", { id, attrs });
   }
 
+  async getAttributeView(id: string): Promise<unknown> {
+    return this.post("/api/av/getAttributeView", { id });
+  }
+
+  async getAttributeViewKeysByAvID(avID: string): Promise<unknown> {
+    return this.post("/api/av/getAttributeViewKeysByAvID", { avID });
+  }
+
+  async renderAttributeView(payload: {
+    id: string;
+    viewID?: string;
+    blockID?: string;
+    query?: string;
+    page?: number;
+    pageSize?: number;
+    groupPaging?: Record<string, unknown>;
+    createIfNotExist?: boolean;
+  }): Promise<unknown> {
+    return this.post("/api/av/renderAttributeView", payload);
+  }
+
+  async setAttributeViewBlockAttr(payload: {
+    avID: string;
+    keyID: string;
+    rowID: string;
+    value: unknown;
+    valueType?: string;
+  }): Promise<unknown> {
+    return this.post("/api/av/setAttributeViewBlockAttr", payload);
+  }
+
+  async addAttributeViewKey(payload: {
+    avID: string;
+    keyID: string;
+    keyName: string;
+    keyType: string;
+    keyIcon?: string;
+    previousKeyID?: string;
+  }): Promise<unknown> {
+    return this.post("/api/av/addAttributeViewKey", payload);
+  }
+
+  async updateAttributeViewKey(payload: {
+    avID: string;
+    keyID: string;
+    keyName?: string;
+    keyType?: string;
+    keyIcon?: string;
+    previousKeyID?: string;
+  }): Promise<unknown> {
+    return this.postAllowingEmptyBody("/api/av/updateAttributeViewKey", payload);
+  }
+
+  async removeAttributeViewKey(payload: {
+    avID: string;
+    keyID: string;
+    removeRelationDest?: boolean;
+  }): Promise<unknown> {
+    return this.post("/api/av/removeAttributeViewKey", payload);
+  }
+
   async getTags(payload: {
     sort?: number;
     app: string;
@@ -128,6 +213,41 @@ export class SiyuanClient {
 
   async removeTag(label: string): Promise<unknown> {
     return this.post("/api/tag/removeTag", { label });
+  }
+
+  async renderTemplate(payload: {
+    id: string;
+    path: string;
+    preview?: boolean;
+  }): Promise<unknown> {
+    return this.post("/api/template/render", payload);
+  }
+
+  async renderSprig(payload: {
+    template: string;
+  }): Promise<unknown> {
+    return this.post("/api/template/renderSprig", payload);
+  }
+
+  async uploadAsset(payload: {
+    filePath: string;
+    uploadName?: string;
+  }): Promise<unknown> {
+    const fileBytes = await readFile(payload.filePath);
+    const fileName = payload.uploadName?.trim() || basename(payload.filePath);
+    const formData = new FormData();
+    formData.append(
+      "file[]",
+      new File([fileBytes], fileName),
+      fileName
+    );
+
+    return this.post("/api/asset/upload", formData, {
+      headers: {
+        // Let the runtime/adapter set the multipart boundary instead of the default JSON header.
+        "Content-Type": undefined
+      }
+    });
   }
 
   async setDocTags(id: string, tags: string): Promise<unknown> {
@@ -205,11 +325,66 @@ export class SiyuanClient {
     return this.post("/api/query/sql", { stmt });
   }
 
-  async post<T>(endpoint: string, body: unknown): Promise<T> {
+  async post<T>(
+    endpoint: string,
+    body: unknown,
+    config?: { headers?: Record<string, string | undefined> }
+  ): Promise<T> {
     try {
-      const response = await this.http.post<SiyuanEnvelope<T>>(endpoint, body);
+      const response = config
+        ? await this.http.post<SiyuanEnvelope<T>>(endpoint, body, config)
+        : await this.http.post<SiyuanEnvelope<T>>(endpoint, body);
       const envelope = response.data;
 
+      if (!isEnvelope(envelope)) {
+        throw new SiyuanCliError(
+          "API_INVALID_RESPONSE",
+          "SiYuan API returned an invalid response envelope",
+          { endpoint }
+        );
+      }
+
+      if (envelope.code !== 0) {
+        throw new SiyuanCliError("API_RESPONSE_ERROR", envelope.msg, {
+          endpoint,
+          response_code: envelope.code
+        });
+      }
+
+      return envelope.data;
+    } catch (error) {
+      if (error instanceof SiyuanCliError) {
+        throw error;
+      }
+
+      if (isAxiosError(error)) {
+        throw new SiyuanCliError(
+          "API_NETWORK_ERROR",
+          "Failed to reach SiYuan API",
+          {
+            endpoint,
+            status: error.response?.status ?? null,
+            axios_code: error.code ?? null
+          }
+        );
+      }
+
+      throw new SiyuanCliError(
+        "API_NETWORK_ERROR",
+        "Failed to reach SiYuan API",
+        { endpoint }
+      );
+    }
+  }
+
+  async postAllowingEmptyBody<T>(endpoint: string, body: unknown): Promise<T> {
+    try {
+      const response = await this.http.post<SiyuanEnvelope<T> | string>(endpoint, body);
+      if (response.data === "") {
+        return null as T;
+      }
+
+      const envelope = response.data;
       if (!isEnvelope(envelope)) {
         throw new SiyuanCliError(
           "API_INVALID_RESPONSE",
