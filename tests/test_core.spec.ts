@@ -167,6 +167,7 @@ describe("bootstrap", () => {
 
   it("ships a shared siyuan-cli skill with its bundled references", () => {
     const sharedSkill = resolve(process.cwd(), "skills/siyuan-cli/SKILL.md");
+    const evals = resolve(process.cwd(), "skills/siyuan-cli/evals/evals.json");
     const commandSelection = resolve(
       process.cwd(),
       "skills/siyuan-cli/references/command-selection.md"
@@ -182,6 +183,7 @@ describe("bootstrap", () => {
     );
 
     expect(() => readFileSync(sharedSkill, "utf8")).not.toThrow();
+    expect(() => readFileSync(evals, "utf8")).not.toThrow();
     expect(() => readFileSync(commandSelection, "utf8")).not.toThrow();
     expect(() => readFileSync(recipes, "utf8")).not.toThrow();
     expect(() => readFileSync(errorHandling, "utf8")).not.toThrow();
@@ -236,8 +238,12 @@ describe("bootstrap", () => {
     expect(sharedSkill).toContain("If global `sy ...` is installed and available");
     expect(sharedSkill).toContain("If global `sy ...` is not available, fall back to `npm run dev -- ...`");
     expect(sharedSkill).toContain("Do not assume `npm run dev -- ...` is available from arbitrary directories");
-    expect(sharedSkill).toContain("Prefer `--markdown-file` or `--data-file` for multiline Markdown");
+    expect(sharedSkill).toContain(
+      "Prefer `doc create --markdown-file` for multiline document creation and `block append --data-file`"
+    );
+    expect(sharedSkill).toContain("Do not assume other block mutations accept file-input flags");
     expect(sharedSkill).toContain("If the file was generated just for this run, add `--cleanup-input-file`");
+    expect(sharedSkill).toContain("only on commands that support it");
     expect(commandSelection).toContain("Prefer global `sy ...` when it is installed");
     expect(commandSelection).toContain("If global `sy ...` is unavailable");
     expect(commandSelection).toContain("Repo-root Fallback Rule");
@@ -256,5 +262,28 @@ describe("bootstrap", () => {
     expect(englishReadme).toContain("single source of truth");
     expect(englishReadme).toContain("npm run skill:install -- --target-dir ~/.codex/skills --force");
     expect(englishReadme).toContain("~/.codex/skills");
+  });
+
+  it("ships minimal skill eval prompts for command routing, multiline writes, and failure recovery", () => {
+    const evals = JSON.parse(
+      readFileSync(resolve(process.cwd(), "skills/siyuan-cli/evals/evals.json"), "utf8")
+    ) as {
+      skill_name: string;
+      evals: Array<{ id: number; prompt: string; expected_output: string; files: string[] }>;
+    };
+
+    expect(evals.skill_name).toBe("siyuan-cli");
+    expect(evals.evals).toHaveLength(3);
+    expect(evals.evals.map((item) => item.id)).toEqual([1, 2, 3]);
+    expect(evals.evals[0]?.prompt).toContain("/Projects/Alpha");
+    expect(evals.evals[0]?.expected_output).toContain("doc resolve-path");
+    expect(evals.evals[1]?.expected_output).toContain("doc create --markdown-file");
+    expect(evals.evals[1]?.expected_output).toContain("block append --data-file");
+    expect(evals.evals[1]?.expected_output).toContain("not invent `--data-file`");
+    expect(evals.evals[2]?.prompt).toContain("template render-sprig");
+    expect(evals.evals[2]?.expected_output).toContain("rejects `--var` and `--vars`");
+    expect(evals.evals.every((item) => Array.isArray(item.files) && item.files.length === 0)).toBe(
+      true
+    );
   });
 });

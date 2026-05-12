@@ -1,0 +1,23 @@
+{
+  "skill_name": "siyuan-cli",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请用这个仓库的 Siyuan CLI 把一段会议跟进追加到 `/Projects/Alpha`。我只知道文档路径，不知道文档 id。请优先给我稳定、适合 agent 的命令。",
+      "expected_output": "The run should choose path-based resolution before mutation, prefer JSON output, and append through `sy doc resolve-path --path ... --json` plus `sy block append --parent-id ... --data ... --json`, or use `workflow doc-upsert` only if create-or-append text semantics are the best fit.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我要通过这个仓库的 `sy` CLI 新建一篇多行 Markdown 文档，并再追加一段多行块内容。请给出适合 agent 的命令，避免把换行写坏，也要考虑临时文件清理。",
+      "expected_output": "The run should prefer `doc create --markdown-file` for multiline document creation, `block append --data-file` for multiline block appends, and add `--cleanup-input-file` only on commands that support it. It should not invent `--data-file` for block update, prepend, insert-before, or insert-after.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我执行 `sy template render-sprig --template-file /tmp/tpl.txt --var name=alpha --json` 失败了。请按这个项目的 skill 帮我判断错误类型、解释原因，并给出正确的恢复命令。",
+      "expected_output": "The run should identify this as a structured validation or unsupported-option failure, explain that `template render-sprig` rejects `--var` and `--vars`, and recover by removing those flags while keeping `--template` or `--template-file` plus `--json`.",
+      "files": []
+    }
+  ]
+}

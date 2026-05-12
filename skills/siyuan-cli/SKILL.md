@@ -1,6 +1,6 @@
 ---
 name: siyuan-cli
-description: Use when an agent needs to operate SiYuan through this repository's `sy` CLI instead of direct HTTP or MCP note writes, especially when the task involves path/id resolution, AV work, template rendering, managed file staging, resource export, or diagnosing structured CLI command failures.
+description: Use when an agent needs to operate SiYuan through this repository's `sy` CLI instead of direct HTTP or MCP note writes, or when the user mentions Siyuan CLI, `sy` commands, command selection, `--json`, path/id resolution, AV work, template rendering, managed file staging, resource export, or recovering from `CONFIG_*`, `API_*`, `SQL_*`, or other structured CLI failures.
 ---
 
 # Siyuan CLI
@@ -16,8 +16,8 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 - If global `sy ...` is installed and available, prefer using it directly.
 - If global `sy ...` is not available, fall back to `npm run dev -- ...` only when the current working directory is this repository root.
 - Prefer workflow commands when they remove orchestration without hiding important behavior.
-- Prefer `--markdown-file` or `--data-file` for multiline Markdown or structured block content.
-- If the file was generated just for this run, add `--cleanup-input-file` so successful writes remove the temporary file.
+- Prefer `doc create --markdown-file` for multiline document creation and `block append --data-file` for multiline block appends. Do not assume other block mutations accept file-input flags.
+- If the file was generated just for this run, add `--cleanup-input-file` only on commands that support it so successful writes remove the temporary file.
 - If a mutation target is given as a readable path rather than an id, prefer `doc resolve-path` or `path doc-id` before block-level writes.
 - Treat destructive mutations such as `doc remove`, `block remove`, `tag remove`, and broad tag renames as confirmation-worthy unless the user intent is already explicit.
 
