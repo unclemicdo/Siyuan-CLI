@@ -49,13 +49,25 @@ Action:
 - `VALIDATION_INVALID_JSON`: structured JSON input such as `--attrs`, `--operations`, or `--conf` is malformed
 - `VALIDATION_FILE_READ_FAILED`: the referenced input file does not exist or cannot be read
 - `VALIDATION_FILE_DELETE_FAILED`: a requested cleanup step could not delete the temporary input file
+- `VALIDATION_INVALID_OPTION`: a flag value is syntactically valid but semantically unsupported, such as a non-absolute `template render --path` or unsupported `file --scope`
+- `VALIDATION_UNSUPPORTED_OPTION`: the command intentionally rejects a flag, such as `template render-sprig --var`
+- `VALIDATION_MISSING_OPTION`: a required safety flag such as `file remove --force` was omitted
 
 Action:
 
 - confirm the command and subcommand name first
 - confirm flags against the current repository command implementation
-- if global `sy ...` is unavailable, retry through `npm run dev -- ...` from the repository root
+- if global `sy ...` is unavailable, retry through `npm run dev -- ...` only from the repository root
 - if the task uses structured input files, check that the path exists and that the file was meant to be ephemeral before retrying cleanup
+
+## Command-specific traps
+
+- `template render` failing with a message like "must be an absolute workspace path" means the agent passed an hpath or relative path. Retry with a real filesystem absolute `.sy` path inside the workspace.
+- `template render-sprig` failing on `--var` or `--vars` is expected. Remove those flags instead of retrying.
+- `export resources` failing on a document that has no asset refs is not a transport error. Check whether the source document actually contains asset links.
+- `file.get`, `file.list`, or `file.remove` failures on scope usually mean the agent used a non-managed scope. Allowed scopes are `cache`, `export`, and `report`.
+- `av set-cell` failures often come from a mismatched `key-id`, `row-id`, or wrong `--value-type` for the destination column.
+- `npm run dev -- ...` failures from outside the repo usually mean the agent used the repo-local fallback from the wrong working directory.
 
 ## When to stop and ask the user
 

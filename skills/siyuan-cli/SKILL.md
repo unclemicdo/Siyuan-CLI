@@ -1,6 +1,6 @@
 ---
 name: siyuan-cli
-description: Use when an agent needs to use this repository's SiYuan or 思源 `sy` CLI to create or update notes, append to docs, resolve paths to ids, run SQL queries, choose between primitive and workflow commands, or diagnose structured CLI failures.
+description: Use when an agent needs to operate SiYuan through this repository's `sy` CLI instead of direct HTTP or MCP note writes, especially when the task involves path/id resolution, AV work, template rendering, managed file staging, resource export, or diagnosing structured CLI command failures.
 ---
 
 # Siyuan CLI
@@ -12,13 +12,42 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 - Prefer direct CLI execution over REPL for agent work.
 - Prefer `--json` unless the user explicitly wants human-formatted output.
 - Validate configuration early when the task depends on a live SiYuan target.
+- Prefer the shortest reliable command path.
 - If global `sy ...` is installed and available, prefer using it directly.
-- If global `sy ...` is not available, fall back to `npm run dev -- ...` from the repository root.
+- If global `sy ...` is not available, fall back to `npm run dev -- ...` only when the current working directory is this repository root.
 - Prefer workflow commands when they remove orchestration without hiding important behavior.
 - Prefer `--markdown-file` or `--data-file` for multiline Markdown or structured block content.
 - If the file was generated just for this run, add `--cleanup-input-file` so successful writes remove the temporary file.
-- If a mutation target is given as a readable path rather than an id, resolve it before block-level writes.
+- If a mutation target is given as a readable path rather than an id, prefer `doc resolve-path` or `path doc-id` before block-level writes.
 - Treat destructive mutations such as `doc remove`, `block remove`, `tag remove`, and broad tag renames as confirmation-worthy unless the user intent is already explicit.
+
+## Boundaries
+
+- Do not use this skill when the user explicitly wants direct SiYuan HTTP requests or MCP note tools.
+- Do not assume `npm run dev -- ...` is available from arbitrary directories; it is a repository-root fallback, not a global command.
+
+## Fast Routing
+
+- Preflight live connectivity with `system version --json`.
+- Use `workflow doc-upsert` for path-based create-or-append writes.
+- Use `doc create --markdown-file` when creating a new document from a full multiline Markdown body.
+- Use `block append` or `block update` when the target id is already known.
+- Use `path doc-id`, `path doc-hpath`, `path doc-path`, `path block-doc`, `path block-root`, and `path block-hpath` for path/id resolution. Do not assume `path block-kramdown` exists.
+- Use `av ...` for database or Attribute View reads and schema/cell changes. Do not fall back to SQL writes.
+- Use `template render` only as the official SiYuan template API passthrough.
+- Use `template render-sprig` only for raw sprig template rendering.
+- Use `file ...` only for managed `cache`, `export`, and `report` scopes plus staging under `/tmp/sy-cli/staging`.
+- Use `asset upload` for file-to-asset ingestion.
+- Use `export resources --id <doc-or-block-id>` to export assets referenced by a document tree.
+
+## High-Risk Gotchas
+
+- `template render` requires both `--id` and `--path`, and `--path` must be a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`. It is not an hpath like `/Notebook/Doc`.
+- `template render` and `template render-sprig` do not support CLI-side `--var` or `--vars`.
+- `file` is intentionally not arbitrary filesystem access. It only writes to managed `data/.sy-cli/{cache,exports,reports}` and staging under `/tmp/sy-cli/staging`.
+- `export resources` is document-centric: it resolves the root document and exports only referenced assets. A document with no asset refs returns a structured not-found style failure instead of an empty success.
+- `av set-cell` accepts plain text for text-like fields because the CLI wraps it into the API value object. For non-text fields, pass the correct `--value-type` and value shape.
+- `doc resolve-path` and `path doc-id` work with SiYuan document paths, not workspace filesystem `.sy` file paths.
 
 ## Routing
 

@@ -22,6 +22,8 @@ What that gives you in practice:
 - get stable JSON output that fits naturally into automation and Agent pipelines
 - use clearer commands and safer defaults than calling the raw SiYuan HTTP API directly
 
+Recent capability additions worth noting: Siyuan CLI now covers AV / database workflows, official template rendering, safe managed file staging for agent artifacts, direct asset upload, path/id helper lookups, and resource export for document-linked assets. The intent is to let agents and scripts handle more real SiYuan workflows through stable product commands instead of falling back to raw SQL writes or ad hoc filesystem access. These additions also make the CLI safer for automation by keeping write surfaces explicit and bounded.
+
 ## Common Use Cases
 
 People usually reach for Siyuan CLI in moments like these:
@@ -140,56 +142,31 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## Installation
 
-This repository is currently source-first. The most reliable way to install it is to clone the repository and run it locally.
+You can use Siyuan CLI in either of these ways.
 
-### 1. Install Node.js
+### Project-level install
 
-Check whether Node.js is already available:
-
-```bash
-node -v
-npm -v
-```
-
-If Node.js is missing, install Node.js 22.10.0 or newer first.
-
-### 2. Clone the repository
+Use this when you want to run the CLI from this repository without creating a global `sy` command:
 
 ```bash
 git clone https://github.com/unclemicdo/Siyuan-CLI
 cd Siyuan-CLI
-```
-
-### 3. Install dependencies
-
-```bash
 npm install
-```
-
-### 4. Build the CLI
-
-```bash
-npm run build
-```
-
-This creates the compiled files in `dist/`.
-
-### 5. Choose how to run it
-
-After setting `SIYUAN_TOKEN` through an exported environment variable or a config file, the easiest way for first-time users is to run the source entrypoint through `npm run dev`:
-
-```bash
 npm run dev -- system version --json
 ```
 
-If you want a local `sy` command on your machine after building:
+### Global install
+
+Use this when you want a machine-level `sy` command:
 
 ```bash
+npm install
+npm run build
 npm link
 sy system version --json
 ```
 
-`npm link` is optional. If you prefer, you can keep using `npm run dev -- ...`.
+Both modes require Node.js `>=22.10.0` and a configured SiYuan token/base URL.
 
 ## Agent Skill
 
@@ -201,9 +178,23 @@ Canonical source:
 
 Global install:
 
-- copy `skills/siyuan-cli/` into your global skill directory
-- Codex target: `~/.codex/skills/siyuan-cli/`
-- Claude Code target: `~/.claude/skills/siyuan-cli/`
+- treat `skills/siyuan-cli/` as the single source of truth
+- during local development, prefer installing the global skill as a symlink back to this directory
+- choose an explicit target skill root such as `~/.codex/skills` or `~/.claude/skills`
+- optional copy mode is available for machines where symlinks are not desirable
+
+Install or refresh the global skill:
+
+```bash
+npm run skill:install -- --target-dir ~/.codex/skills --force
+```
+
+Useful variants:
+
+```bash
+npm run skill:install -- --mode copy --target-dir ~/.codex/skills --force
+npm run skill:install -- --target-dir ~/.claude/skills --force
+```
 
 Usage:
 
@@ -312,6 +303,8 @@ Official repo semantics verified for knowledge management:
 - native document tags are stored on the document root `tags` attribute
 - backlinks and backmentions are served by the official `ref` APIs
 - graph data is served by the official global and local `graph` APIs
+
+In addition to the core note, block, tag, ref, graph, and SQL flows, the CLI now also covers AV / Attribute View operations, official template rendering, managed file staging, asset upload, path/id helper lookups, and resource export. The goal is broader workflow coverage without opening unsafe write paths or forcing agents back to raw HTTP or SQL mutation patterns.
 
 Top-level commands:
 

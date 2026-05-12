@@ -22,6 +22,8 @@ Siyuan CLI는 SiYuan의 HTTP API 위에 안정적인 명령줄 레이어를 제�
 - 자동화 및 에이전트 파이프라인에 자연스럽게 연결되는 안정적인 JSON 출력을 얻을 수 있습니다
 - 원시 SiYuan HTTP API를 직접 호출하는 것보다 더 명확한 명령과 더 안전한 기본 동작을 사용할 수 있습니다
 
+최근 추가된 기능도 주목할 만합니다. Siyuan CLI는 이제 AV / 데이터베이스 워크플로, 공식 템플릿 렌더링, 에이전트 산출물을 위한 안전한 관리형 파일 스테이징, 직접 에셋 업로드, 경로 / ID 보조 조회, 문서 연관 리소스 내보내기까지 다룹니다. 목표는 에이전트와 스크립트가 원시 SQL 쓰기나 임시 파일 시스템 접근으로 되돌아가지 않고도 더 많은 실제 SiYuan 워크플로를 안정적인 제품 명령으로 처리하게 하는 것이며, 이런 추가 기능은 자동화에서의 쓰기 경계도 더 명확하고 안전하게 만듭니다.
+
 ## 대표적인 사용 사례
 
 사람들은 보통 다음과 같은 상황에서 Siyuan CLI를 사용합니다:
@@ -86,56 +88,31 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## 설치
 
-이 저장소는 현재 소스 우선 방식에 가깝습니다. 가장 안정적인 설치 방법은 저장소를 클론한 뒤 로컬에서 실행하는 것입니다.
+Siyuan CLI는 다음 두 가지 방식 중 하나로 사용할 수 있습니다.
 
-### 1. Node.js 설치
+### 프로젝트 단위 설치
 
-Node.js가 이미 있는지 확인합니다:
-
-```bash
-node -v
-npm -v
-```
-
-Node.js가 없다면 먼저 Node.js 22.10.0 이상을 설치하세요.
-
-### 2. 저장소 클론
+전역 `sy` 명령을 만들지 않고 이 저장소 안에서만 CLI를 실행하려면 이 방식을 사용하세요:
 
 ```bash
 git clone https://github.com/unclemicdo/Siyuan-CLI
 cd Siyuan-CLI
-```
-
-### 3. 의존성 설치
-
-```bash
 npm install
-```
-
-### 4. CLI 빌드
-
-```bash
-npm run build
-```
-
-그러면 `dist/` 에 컴파일된 파일이 생성됩니다.
-
-### 5. 실행 방식 선택
-
-환경 변수나 설정 파일로 `SIYUAN_TOKEN` 을 설정한 뒤, 처음 사용하는 사람에게 가장 쉬운 방법은 `npm run dev` 로 소스 엔트리포인트를 실행하는 것입니다:
-
-```bash
 npm run dev -- system version --json
 ```
 
-빌드 후 로컬 `sy` 명령을 사용하고 싶다면:
+### 전역 설치
+
+머신 전역의 `sy` 명령을 원한다면 이 방식을 사용하세요:
 
 ```bash
+npm install
+npm run build
 npm link
 sy system version --json
 ```
 
-`npm link` 는 선택 사항입니다. 원한다면 계속 `npm run dev -- ...` 를 사용해도 됩니다.
+두 방식 모두 Node.js `>=22.10.0` 과 미리 구성된 SiYuan token/base URL이 필요합니다.
 
 ## 에이전트 스킬
 
@@ -147,9 +124,23 @@ sy system version --json
 
 전역 설치:
 
-- `skills/siyuan-cli/` 만 전역 스킬 디렉터리로 복사하세요
-- Codex 대상 경로: `~/.codex/skills/siyuan-cli/`
-- Claude Code 대상 경로: `~/.claude/skills/siyuan-cli/`
+- `skills/siyuan-cli/` 를 단일 원본으로 취급하세요
+- 로컬 개발 환경에서는 전역 스킬을 이 디렉터리를 가리키는 심볼릭 링크로 설치하는 방식을 우선 권장합니다
+- `~/.codex/skills` 또는 `~/.claude/skills` 같은 대상 skill 루트를 명시적으로 지정하세요
+- 심볼릭 링크가 적합하지 않은 머신에서는 복사 모드도 사용할 수 있습니다
+
+전역 스킬 설치 또는 갱신:
+
+```bash
+npm run skill:install -- --target-dir ~/.codex/skills --force
+```
+
+유용한 변형:
+
+```bash
+npm run skill:install -- --mode copy --target-dir ~/.codex/skills --force
+npm run skill:install -- --target-dir ~/.claude/skills --force
+```
 
 사용:
 

@@ -22,6 +22,8 @@ Lo que eso te aporta en la práctica:
 - obtener salida JSON estable que encaja de forma natural en canalizaciones de automatización y agentes
 - usar comandos más claros y valores por defecto más seguros que al llamar directamente a la API HTTP sin procesar de SiYuan
 
+También conviene destacar las capacidades añadidas recientemente: Siyuan CLI ahora cubre flujos AV / base de datos, renderizado oficial de plantillas, staging seguro de archivos gestionados para artefactos de agentes, carga directa de recursos, búsquedas auxiliares de ruta / ID y exportación de recursos vinculados a documentos. La intención es que agentes y scripts puedan cubrir más flujos reales de SiYuan mediante comandos de producto estables, en lugar de volver a escrituras SQL sin procesar o a acceso improvisado al sistema de archivos; estas capacidades nuevas también dejan más explícitos y acotados los límites de escritura para automatización.
+
 ## Casos de Uso Comunes
 
 La gente suele recurrir a Siyuan CLI en momentos como estos:
@@ -86,56 +88,31 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## Instalación
 
-Este repositorio está orientado actualmente al uso desde código fuente. La forma más fiable de instalarlo es clonar el repositorio y ejecutarlo localmente.
+Puedes usar Siyuan CLI de cualquiera de estas dos maneras.
 
-### 1. Instala Node.js
+### Instalación a nivel de proyecto
 
-Comprueba si Node.js ya está disponible:
-
-```bash
-node -v
-npm -v
-```
-
-Si Node.js no está instalado, instala primero Node.js 22.10.0 o superior.
-
-### 2. Clona el repositorio
+Úsala así cuando quieras ejecutar la CLI desde este repositorio sin crear un comando global `sy`:
 
 ```bash
 git clone https://github.com/unclemicdo/Siyuan-CLI
 cd Siyuan-CLI
-```
-
-### 3. Instala las dependencias
-
-```bash
 npm install
-```
-
-### 4. Compila la CLI
-
-```bash
-npm run build
-```
-
-Esto crea los archivos compilados en `dist/`.
-
-### 5. Elige cómo ejecutarla
-
-Después de configurar `SIYUAN_TOKEN` mediante una variable de entorno exportada o un archivo de configuración, la forma más sencilla para usuarios nuevos es ejecutar el punto de entrada del código fuente con `npm run dev`:
-
-```bash
 npm run dev -- system version --json
 ```
 
-Si quieres disponer de un comando local `sy` en tu máquina tras compilar:
+### Instalación global
+
+Úsala así cuando quieras disponer de un comando `sy` a nivel de máquina:
 
 ```bash
+npm install
+npm run build
 npm link
 sy system version --json
 ```
 
-`npm link` es opcional. Si lo prefieres, puedes seguir usando `npm run dev -- ...`.
+Ambos modos requieren Node.js `>=22.10.0` y un token/base URL de SiYuan ya configurados.
 
 ## Skill para agentes
 
@@ -147,9 +124,23 @@ Directorio fuente canónico:
 
 Instalación global:
 
-- copia `skills/siyuan-cli/` a tu directorio global de skills
-- destino de Codex: `~/.codex/skills/siyuan-cli/`
-- destino de Claude Code: `~/.claude/skills/siyuan-cli/`
+- trata `skills/siyuan-cli/` como la única fuente de verdad
+- durante el desarrollo local, instala el skill global preferentemente como un enlace simbólico a este directorio
+- elige explícitamente una raíz de skills como `~/.codex/skills` o `~/.claude/skills`
+- si no quieres usar enlaces simbólicos en una máquina, también puedes usar el modo de copia
+
+Instala o refresca el skill global:
+
+```bash
+npm run skill:install -- --target-dir ~/.codex/skills --force
+```
+
+Variantes útiles:
+
+```bash
+npm run skill:install -- --mode copy --target-dir ~/.codex/skills --force
+npm run skill:install -- --target-dir ~/.claude/skills --force
+```
 
 Uso:
 

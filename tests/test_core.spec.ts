@@ -55,6 +55,33 @@ describe("bootstrap", () => {
     expect(chineseReadme).toContain("export SIYUAN_TOKEN=your-token");
   });
 
+  it("keeps the simplified installation model aligned between english and simplified chinese readmes", () => {
+    const englishReadme = readFileSync(resolve(process.cwd(), "README.md"), "utf8");
+    const chineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-CN.md"),
+      "utf8"
+    );
+
+    expect(englishReadme).toContain("### Project-level install");
+    expect(englishReadme).toContain("### Global install");
+    expect(chineseReadme).toContain("### 项目级安装");
+    expect(chineseReadme).toContain("### 全局安装");
+    expect(chineseReadme).not.toContain("### 1. 安装 Node.js");
+  });
+
+  it("keeps the added capability overview aligned between english and simplified chinese readmes", () => {
+    const englishReadme = readFileSync(resolve(process.cwd(), "README.md"), "utf8");
+    const chineseReadme = readFileSync(
+      resolve(process.cwd(), "README.zh-CN.md"),
+      "utf8"
+    );
+
+    expect(englishReadme).toContain("Recent capability additions worth noting:");
+    expect(englishReadme).toContain("AV / database workflows");
+    expect(chineseReadme).toContain("最近新增的能力也值得一提：");
+    expect(chineseReadme).toContain("AV / 数据库工作流");
+  });
+
   it("keeps multilingual README navigation consistent", () => {
     const englishReadme = readFileSync(resolve(process.cwd(), "README.md"), "utf8");
     const simplifiedChineseReadme = readFileSync(
@@ -102,10 +129,9 @@ describe("bootstrap", () => {
       koreanReadme
     ]) {
       expect(readme).toContain("skills/siyuan-cli/");
-      expect(readme).toContain("~/.codex/skills/siyuan-cli/");
-      expect(readme).toContain("~/.claude/skills/siyuan-cli/");
-      expect(readme).not.toContain("`.codex/skills/siyuan-cli/`");
-      expect(readme).not.toContain("`.claude/skills/siyuan-cli/`");
+      expect(readme).toContain("npm run skill:install");
+      expect(readme).toContain("~/.codex/skills");
+      expect(readme).toContain("~/.claude/skills");
       expect(readme).toContain("siyuan-cli");
     }
   });
@@ -162,6 +188,11 @@ describe("bootstrap", () => {
     expect(() => readFileSync(openaiYaml, "utf8")).not.toThrow();
   });
 
+  it("ships a skill install script", () => {
+    const installScript = resolve(process.cwd(), "scripts/install-skill.mjs");
+    expect(() => readFileSync(installScript, "utf8")).not.toThrow();
+  });
+
   it("keeps the shared siyuan-cli skill self-contained", () => {
     const sharedSkill = readFileSync(
       resolve(process.cwd(), "skills/siyuan-cli/SKILL.md"),
@@ -175,6 +206,7 @@ describe("bootstrap", () => {
   });
 
   it("documents simplified siyuan-cli execution defaults and tag routing clearly", () => {
+    const englishReadme = readFileSync(resolve(process.cwd(), "README.md"), "utf8");
     const sharedSkill = readFileSync(
       resolve(process.cwd(), "skills/siyuan-cli/SKILL.md"),
       "utf8"
@@ -199,13 +231,16 @@ describe("bootstrap", () => {
       resolve(process.cwd(), "skills/siyuan-cli/agents/openai.yaml"),
       "utf8"
     );
+    const packageJson = readFileSync(resolve(process.cwd(), "package.json"), "utf8");
 
     expect(sharedSkill).toContain("If global `sy ...` is installed and available");
     expect(sharedSkill).toContain("If global `sy ...` is not available, fall back to `npm run dev -- ...`");
+    expect(sharedSkill).toContain("Do not assume `npm run dev -- ...` is available from arbitrary directories");
     expect(sharedSkill).toContain("Prefer `--markdown-file` or `--data-file` for multiline Markdown");
     expect(sharedSkill).toContain("If the file was generated just for this run, add `--cleanup-input-file`");
     expect(commandSelection).toContain("Prefer global `sy ...` when it is installed");
     expect(commandSelection).toContain("If global `sy ...` is unavailable");
+    expect(commandSelection).toContain("Repo-root Fallback Rule");
     expect(commandSelection).toContain("Prefer `doc create --markdown-file`");
     expect(commandSelection).toContain("Prefer `workflow doc-upsert` only when the write is create-or-append text");
     expect(recipes).toContain("If `doc resolve-path` returns `null`, do not continue to `block append`");
@@ -213,7 +248,13 @@ describe("bootstrap", () => {
     expect(knowledge).toContain("verify document tag writes");
     expect(errorHandling).toContain("## `VALIDATION_*`");
     expect(errorHandling).toContain("unknown option");
-    expect(openaiYaml).toContain("prefer global `sy ...` when it is available");
+    expect(errorHandling).toContain("repo-local fallback from the wrong working directory");
+    expect(openaiYaml).toContain("run `system version --json` as preflight");
     expect(openaiYaml).toContain("knowledge-management.md");
+    expect(openaiYaml).toContain("repository-root fallback");
+    expect(packageJson).toContain("\"skill:install\"");
+    expect(englishReadme).toContain("single source of truth");
+    expect(englishReadme).toContain("npm run skill:install -- --target-dir ~/.codex/skills --force");
+    expect(englishReadme).toContain("~/.codex/skills");
   });
 });

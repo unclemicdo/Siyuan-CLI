@@ -28,6 +28,13 @@ sy doc resolve-path --path /Projects/Alpha --json
 sy block append --parent-id doc-1 --data "Meeting summary" --json
 ```
 
+If the task is path/id translation rather than mutation orchestration, prefer the `path` helpers:
+
+```bash
+sy path doc-id --path /Projects/Alpha --json
+sy path block-root --id block-1 --json
+```
+
 ## Create a document from multiline Markdown
 
 Use `--markdown-file` for multiline content so shells do not write literal `\n` text.
@@ -57,6 +64,68 @@ cat > /tmp/comment.md <<'EOF'
 EOF
 sy block append --parent-id doc-1 --data-file /tmp/comment.md --cleanup-input-file --json
 ```
+
+## Inspect and update an AV table
+
+Use `av keys` and `av views` first so later mutations use real ids from the target instance.
+
+```bash
+sy av keys --id av-1 --json
+sy av views --id av-1 --json
+sy av set-cell --av-id av-1 --key-id key-1 --row-id row-1 --value "ready" --value-type text --json
+```
+
+Agent note:
+
+- Plain text values are fine for text-like fields because the CLI wraps them before calling the SiYuan API.
+- For non-text columns, pass the correct `--value-type` and value shape instead of guessing.
+
+## Render templates correctly
+
+Use `template render` only with the official API inputs: a block or document id plus the workspace absolute `.sy` file path.
+
+```bash
+sy template render \
+  --id 20260424221816-4d8he48 \
+  --path /Users/name/SiYuan/Workspace/data/20260224143238-p14slum/20260424221816-4d8he48.sy \
+  --preview \
+  --json
+```
+
+Use `template render-sprig` for raw template rendering without document context:
+
+```bash
+sy template render-sprig --template 'Hello {{ "world" | upper }}' --json
+```
+
+Do not retry either command with `--var` or `--vars`. The current CLI rejects them.
+
+## Use managed file scopes instead of arbitrary files
+
+Use these commands when an agent needs durable but bounded artifacts for reports, exported text, or cache entries.
+
+```bash
+sy file put-report --name review.md --content "# Review" --overwrite --json
+sy file list --scope report --json
+sy file get --scope report --name review.md --json
+sy file stage-put --name temp-input.md --content-file /tmp/input.md --cleanup-input-file --json
+sy file stage-get --name temp-input.md --json
+```
+
+Managed locations:
+
+- `put-cache` -> `data/.sy-cli/cache/...`
+- `put-export` -> `data/.sy-cli/exports/...`
+- `put-report` -> `data/.sy-cli/reports/...`
+- `stage-put` -> `/tmp/sy-cli/staging/...`
+
+## Upload an asset
+
+```bash
+sy asset upload --file /tmp/example.png --upload-name example.png --json
+```
+
+Use this when a later document write needs a valid SiYuan asset path instead of a local temp file path.
 
 ## Apply, update, or clear document tags
 
@@ -92,6 +161,18 @@ sy doc export-md --id doc-1 --json
 ```
 
 Check `data.content` before handing it to another tool.
+
+## Export assets referenced by a document tree
+
+```bash
+sy export resources --id doc-1 --name doc-1-assets --json
+```
+
+Agent note:
+
+- The input can be a document id or block id.
+- The command resolves the root document and exports only assets referenced from that document tree.
+- If the document has no asset references, expect a structured failure instead of an empty export.
 
 ## Query note data and convert it into a report
 

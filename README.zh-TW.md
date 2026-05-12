@@ -22,6 +22,8 @@ Siyuan CLI 在 SiYuan 的 HTTP API 之上提供了一層穩定的命令列封裝
 - 回傳穩定的 JSON 輸出，更容易接入自動化流程與 Agent 工作流
 - 相比直接呼叫原始 SiYuan HTTP API，命令更清楚，預設行為也更安全
 
+最近新增的能力也值得一提：Siyuan CLI 現在已經覆蓋 AV / 資料庫工作流、官方範本渲染、面向 Agent 產物的安全託管檔案暫存、直接資源上傳、路徑 / ID 輔助查詢，以及文件關聯資源匯出。目標是讓 Agent 和腳本透過穩定的產品命令處理更多真實 SiYuan 工作流，而不是退回到原始 SQL 寫入或臨時檔案系統操作；這些新增能力也讓自動化寫入邊界更明確、更安全。
+
 ## 常見使用場景
 
 人們通常會在下面這些時刻用到 Siyuan CLI：
@@ -86,56 +88,31 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## 安裝
 
-這個倉庫目前更適合以原始碼方式使用。最可靠的安裝方式是複製倉庫並在本地執行它。
+你可以用下面兩種方式使用 Siyuan CLI。
 
-### 1. 安裝 Node.js
+### 專案級安裝
 
-先檢查系統裡是否已經有 Node.js：
-
-```bash
-node -v
-npm -v
-```
-
-如果沒有，請先安裝 Node.js 22.10.0 或更高版本。
-
-### 2. 複製倉庫
+適合只在這個倉庫裡使用，不需要全域 `sy` 命令的場景：
 
 ```bash
 git clone https://github.com/unclemicdo/Siyuan-CLI
 cd Siyuan-CLI
-```
-
-### 3. 安裝依賴
-
-```bash
 npm install
-```
-
-### 4. 建置 CLI
-
-```bash
-npm run build
-```
-
-這會在 `dist/` 中產生編譯後的檔案。
-
-### 5. 選擇執行方式
-
-先透過匯出的環境變數或設定檔設定 `SIYUAN_TOKEN`。對第一次使用的使用者來說，最簡單的方式是透過 `npm run dev` 執行原始碼入口：
-
-```bash
 npm run dev -- system version --json
 ```
 
-如果你在建置後希望機器上有一個本地 `sy` 命令：
+### 全域安裝
+
+適合希望機器上直接有一個全域 `sy` 命令的場景：
 
 ```bash
+npm install
+npm run build
 npm link
 sy system version --json
 ```
 
-`npm link` 是可選的。如果你願意，也可以一直使用 `npm run dev -- ...`。
+這兩種方式都需要 Node.js `>=22.10.0`，並提前配置好 SiYuan token 和 base URL。
 
 ## Agent Skill
 
@@ -147,9 +124,23 @@ sy system version --json
 
 全域安裝：
 
-- 只複製 `skills/siyuan-cli/` 到你的全域 skill 目錄
-- Codex 目標路徑：`~/.codex/skills/siyuan-cli/`
-- Claude Code 目標路徑：`~/.claude/skills/siyuan-cli/`
+- 將 `skills/siyuan-cli/` 視為唯一事實來源
+- 在本地開發環境中，優先把全域 skill 安裝為指向這個目錄的符號連結
+- 顯式指定目標 skill 根目錄，例如 `~/.codex/skills` 或 `~/.claude/skills`
+- 如果機器上不適合使用符號連結，也可以改用複製模式
+
+安裝或刷新全域 skill：
+
+```bash
+npm run skill:install -- --target-dir ~/.codex/skills --force
+```
+
+常見變體：
+
+```bash
+npm run skill:install -- --mode copy --target-dir ~/.codex/skills --force
+npm run skill:install -- --target-dir ~/.claude/skills --force
+```
 
 使用方式：
 
