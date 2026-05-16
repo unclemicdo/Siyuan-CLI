@@ -62,10 +62,12 @@ For multiline Markdown, prefer a file so shells do not write literal `\n` text:
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
 ```
 
-If the Markdown file is agent-generated and only needed for this write, add `--cleanup-input-file` to delete it after a successful write:
+If the Markdown file is agent-generated and only needed for this write, create it under the current working directory, pass an absolute path, and add `--cleanup-input-file` to delete it after a successful write. In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for these one-off files:
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file /tmp/note.md --cleanup-input-file --json
+WORKDIR="$(pwd)"
+INPUT_FILE="$WORKDIR/.sy-input-note.md"
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 Append a follow-up note after a meeting or call:
@@ -80,10 +82,12 @@ For multiline block content, prefer `--data-file`:
 npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
 ```
 
-For agent-generated one-off input files, add `--cleanup-input-file` to remove the file after a successful append:
+For agent-generated one-off input files, create them under the current working directory, pass an absolute path, and add `--cleanup-input-file` to remove the file after a successful append. In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for these one-off files:
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --data-file /tmp/comment.md --cleanup-input-file --json
+WORKDIR="$(pwd)"
+INPUT_FILE="$WORKDIR/.sy-input-comment.md"
+npm run dev -- block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 Query note data in bulk when you need to inspect or organize content:

@@ -62,6 +62,14 @@ npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
 ```
 
+如果 Markdown 文件是 agent 临时生成、写完即可删除，建议把文件创建在当前工作目录下，传入绝对路径，并加上 `--cleanup-input-file`。在沙箱环境中，不要把这类一次性输入文件放到 `/tmp` 或 `$TMPDIR`：
+
+```bash
+WORKDIR="$(pwd)"
+INPUT_FILE="$WORKDIR/.sy-input-note.md"
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
+```
+
 开完会后，给现有文档追加一条跟进记录：
 
 ```bash
@@ -72,6 +80,14 @@ npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
 
 ```bash
 npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
+```
+
+如果块内容文件是 agent 临时生成、写完即可删除，建议把文件创建在当前工作目录下，传入绝对路径，并加上 `--cleanup-input-file`。在沙箱环境中，不要把这类一次性输入文件放到 `/tmp` 或 `$TMPDIR`：
+
+```bash
+WORKDIR="$(pwd)"
+INPUT_FILE="$WORKDIR/.sy-input-comment.md"
+npm run dev -- block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 当你需要批量查看或整理内容时，先跑一条 SQL 查询：

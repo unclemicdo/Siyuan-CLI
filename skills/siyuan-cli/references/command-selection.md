@@ -40,6 +40,7 @@
 - `doc resolve-path` and `path doc-id` expect SiYuan document paths such as `/Projects/Alpha` or `/Notebook/Projects/Alpha`.
 - `template render --path` expects a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`.
 - `file ...` names are safe managed filenames, not arbitrary relative paths.
+- For agent-generated multiline input files, prefer a current-working-directory absolute path. In sandboxed environments, avoid `/tmp` and `$TMPDIR` for `--markdown-file` and `--data-file` inputs.
 
 ## Repo-root Fallback Rule
 

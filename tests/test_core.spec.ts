@@ -242,22 +242,28 @@ describe("bootstrap", () => {
       "Prefer `doc create --markdown-file` for multiline document creation and `block append --data-file`"
     );
     expect(sharedSkill).toContain("Do not assume other block mutations accept file-input flags");
-    expect(sharedSkill).toContain("If the file was generated just for this run, add `--cleanup-input-file`");
+    expect(sharedSkill).toContain("write it under the current working directory");
+    expect(sharedSkill).toContain("add `--cleanup-input-file`");
     expect(sharedSkill).toContain("only on commands that support it");
     expect(commandSelection).toContain("Prefer global `sy ...` when it is installed");
     expect(commandSelection).toContain("If global `sy ...` is unavailable");
     expect(commandSelection).toContain("Repo-root Fallback Rule");
     expect(commandSelection).toContain("Prefer `doc create --markdown-file`");
     expect(commandSelection).toContain("Prefer `workflow doc-upsert` only when the write is create-or-append text");
+    expect(commandSelection).toContain("avoid `/tmp` and `$TMPDIR`");
     expect(recipes).toContain("If `doc resolve-path` returns `null`, do not continue to `block append`");
+    expect(recipes).toContain("current working directory");
     expect(knowledge).toContain("writes the document root `tags` attribute");
     expect(knowledge).toContain("verify document tag writes");
     expect(errorHandling).toContain("## `VALIDATION_*`");
     expect(errorHandling).toContain("unknown option");
     expect(errorHandling).toContain("repo-local fallback from the wrong working directory");
+    expect(errorHandling).toContain("VALIDATION_FILE_READ_FAILED");
+    expect(errorHandling).toContain("Stop retrying `/tmp` or `$TMPDIR` variants");
     expect(openaiYaml).toContain("run `system version --json` as preflight");
     expect(openaiYaml).toContain("knowledge-management.md");
     expect(openaiYaml).toContain("repository-root fallback");
+    expect(openaiYaml).toContain("avoid `/tmp` or `$TMPDIR`");
     expect(packageJson).toContain("\"skill:install\"");
     expect(englishReadme).toContain("single source of truth");
     expect(englishReadme).toContain("npm run skill:install -- --target-dir ~/.codex/skills --force");
@@ -273,15 +279,18 @@ describe("bootstrap", () => {
     };
 
     expect(evals.skill_name).toBe("siyuan-cli");
-    expect(evals.evals).toHaveLength(3);
-    expect(evals.evals.map((item) => item.id)).toEqual([1, 2, 3]);
+    expect(evals.evals).toHaveLength(4);
+    expect(evals.evals.map((item) => item.id)).toEqual([1, 2, 3, 4]);
     expect(evals.evals[0]?.prompt).toContain("/Projects/Alpha");
     expect(evals.evals[0]?.expected_output).toContain("doc resolve-path");
     expect(evals.evals[1]?.expected_output).toContain("doc create --markdown-file");
     expect(evals.evals[1]?.expected_output).toContain("block append --data-file");
+    expect(evals.evals[1]?.expected_output).toContain("avoid `/tmp` and `$TMPDIR`");
     expect(evals.evals[1]?.expected_output).toContain("not invent `--data-file`");
-    expect(evals.evals[2]?.prompt).toContain("template render-sprig");
-    expect(evals.evals[2]?.expected_output).toContain("rejects `--var` and `--vars`");
+    expect(evals.evals[2]?.prompt).toContain("VALIDATION_FILE_READ_FAILED");
+    expect(evals.evals[2]?.expected_output).toContain("current working directory");
+    expect(evals.evals[3]?.prompt).toContain("template render-sprig");
+    expect(evals.evals[3]?.expected_output).toContain("rejects `--var` and `--vars`");
     expect(evals.evals.every((item) => Array.isArray(item.files) && item.files.length === 0)).toBe(
       true
     );

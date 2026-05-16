@@ -38,31 +38,37 @@ sy path block-root --id block-1 --json
 ## Create a document from multiline Markdown
 
 Use `--markdown-file` for multiline content so shells do not write literal `\n` text.
-If the file was generated just for this command, add `--cleanup-input-file` so a successful write deletes it automatically.
+If the file was generated just for this command, write it under the current working directory, pass the absolute path to `--markdown-file`, and add `--cleanup-input-file` so a successful write deletes it automatically.
+In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for these one-off input files.
 
 ```bash
-cat > /tmp/alpha.md <<'EOF'
+WORKDIR="$(pwd)"
+INPUT_FILE="$WORKDIR/.sy-input-alpha.md"
+cat > "$INPUT_FILE" <<'EOF'
 # Alpha
 
 - status: `todo`
 - owner: `agent`
 EOF
-sy doc create --notebook nb-1 --path /Projects/Alpha --markdown-file /tmp/alpha.md --cleanup-input-file --json
+sy doc create --notebook nb-1 --path /Projects/Alpha --markdown-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 ## Append multiline block content
 
 Use `--data-file` for multiline comments, reports, and structured blocks.
-If the file was generated just for this command, add `--cleanup-input-file` so a successful append deletes it automatically.
+If the file was generated just for this command, write it under the current working directory, pass the absolute path to `--data-file`, and add `--cleanup-input-file` so a successful append deletes it automatically.
+In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for these one-off input files.
 
 ```bash
-cat > /tmp/comment.md <<'EOF'
+WORKDIR="$(pwd)"
+INPUT_FILE="$WORKDIR/.sy-input-comment.md"
+cat > "$INPUT_FILE" <<'EOF'
 - source_block: `doc-1`
   author: `agent`
   comment_status: `open`
   body: Follow-up note
 EOF
-sy block append --parent-id doc-1 --data-file /tmp/comment.md --cleanup-input-file --json
+sy block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 ## Inspect and update an AV table
@@ -103,12 +109,15 @@ Do not retry either command with `--var` or `--vars`. The current CLI rejects th
 ## Use managed file scopes instead of arbitrary files
 
 Use these commands when an agent needs durable but bounded artifacts for reports, exported text, or cache entries.
+If the source file for `stage-put` is agent-generated, create it under the current working directory, pass an absolute path, and avoid `/tmp` or `$TMPDIR` in sandboxed environments.
 
 ```bash
 sy file put-report --name review.md --content "# Review" --overwrite --json
 sy file list --scope report --json
 sy file get --scope report --name review.md --json
-sy file stage-put --name temp-input.md --content-file /tmp/input.md --cleanup-input-file --json
+WORKDIR="$(pwd)"
+INPUT_FILE="$WORKDIR/.sy-input-stage.md"
+sy file stage-put --name temp-input.md --content-file "$INPUT_FILE" --cleanup-input-file --json
 sy file stage-get --name temp-input.md --json
 ```
 
@@ -121,8 +130,12 @@ Managed locations:
 
 ## Upload an asset
 
+If the local file is agent-generated for this run, prefer a current-working-directory absolute path instead of `/tmp` or `$TMPDIR` in sandboxed environments.
+
 ```bash
-sy asset upload --file /tmp/example.png --upload-name example.png --json
+WORKDIR="$(pwd)"
+ASSET_FILE="$WORKDIR/example.png"
+sy asset upload --file "$ASSET_FILE" --upload-name example.png --json
 ```
 
 Use this when a later document write needs a valid SiYuan asset path instead of a local temp file path.

@@ -17,7 +17,7 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 - If global `sy ...` is not available, fall back to `npm run dev -- ...` only when the current working directory is this repository root.
 - Prefer workflow commands when they remove orchestration without hiding important behavior.
 - Prefer `doc create --markdown-file` for multiline document creation and `block append --data-file` for multiline block appends. Do not assume other block mutations accept file-input flags.
-- If the file was generated just for this run, add `--cleanup-input-file` only on commands that support it so successful writes remove the temporary file.
+- If the file was generated just for this run, write it under the current working directory, pass the absolute path to the CLI, and add `--cleanup-input-file` only on commands that support it so successful writes remove the temporary file.
 - If a mutation target is given as a readable path rather than an id, prefer `doc resolve-path` or `path doc-id` before block-level writes.
 - Treat destructive mutations such as `doc remove`, `block remove`, `tag remove`, and broad tag renames as confirmation-worthy unless the user intent is already explicit.
 
@@ -44,6 +44,7 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 
 - `template render` requires both `--id` and `--path`, and `--path` must be a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`. It is not an hpath like `/Notebook/Doc`.
 - `template render` and `template render-sprig` do not support CLI-side `--var` or `--vars`.
+- In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for generated multiline input files. Different processes may resolve them differently. Use a current-working-directory absolute path instead.
 - `file` is intentionally not arbitrary filesystem access. It only writes to managed `data/.sy-cli/{cache,exports,reports}` and staging under `/tmp/sy-cli/staging`.
 - `export resources` is document-centric: it resolves the root document and exports only referenced assets. A document with no asset refs returns a structured not-found style failure instead of an empty success.
 - `av set-cell` accepts plain text for text-like fields because the CLI wraps it into the API value object. For non-text fields, pass the correct `--value-type` and value shape.

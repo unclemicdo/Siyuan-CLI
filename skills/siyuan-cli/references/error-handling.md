@@ -59,11 +59,13 @@ Action:
 - confirm flags against the current repository command implementation
 - if global `sy ...` is unavailable, retry through `npm run dev -- ...` only from the repository root
 - if the task uses structured input files, check that the path exists and that the file was meant to be ephemeral before retrying cleanup
+- in sandboxed agent environments, treat `VALIDATION_FILE_READ_FAILED` on `/tmp` or `$TMPDIR` inputs as a path-visibility problem first; rewrite the file under the current working directory, switch to an absolute path, and retry there
 
 ## Command-specific traps
 
 - `template render` failing with a message like "must be an absolute workspace path" means the agent passed an hpath or relative path. Retry with a real filesystem absolute `.sy` path inside the workspace.
 - `template render-sprig` failing on `--var` or `--vars` is expected. Remove those flags instead of retrying.
+- repeated `VALIDATION_FILE_READ_FAILED` on generated multiline input files usually means the agent kept retrying the same unreachable temp path pattern. Stop retrying `/tmp` or `$TMPDIR` variants and move the file into the current working directory instead.
 - `export resources` failing on a document that has no asset refs is not a transport error. Check whether the source document actually contains asset links.
 - `file.get`, `file.list`, or `file.remove` failures on scope usually mean the agent used a non-managed scope. Allowed scopes are `cache`, `export`, and `report`.
 - `av set-cell` failures often come from a mismatched `key-id`, `row-id`, or wrong `--value-type` for the destination column.
