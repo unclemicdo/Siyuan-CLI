@@ -1,9 +1,9 @@
-import { readFileSync } from "node:fs";
 import { Command } from "commander";
 import { z } from "zod";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
 import { cleanupInputFile } from "../utils/input-file-cleanup.js";
+import { resolveTextInput } from "../utils/text-input.js";
 
 const jsonObjectSchema = z.record(z.string(), z.unknown());
 
@@ -61,7 +61,6 @@ export function registerTemplateCommands(
 
   template
     .command("render-sprig")
-    .option("--template <template>")
     .option("--template-file <path>")
     .option("--cleanup-input-file")
     .option("--var <key=value>", "template variable", collectValues, [])
@@ -69,7 +68,6 @@ export function registerTemplateCommands(
     .option("--json")
     .action(
       async (options: {
-        template?: string;
         templateFile?: string;
         cleanupInputFile?: boolean;
         var: string[];
@@ -87,11 +85,10 @@ export function registerTemplateCommands(
               );
             }
 
-            const templateSource = resolveRequiredTextInput({
-              inline: options.template,
+            const templateSource = await resolveTextInput({
               file: options.templateFile,
-              inlineName: "--template",
-              fileName: "--template-file"
+              fileName: "--template-file",
+              required: true
             });
             const result = await deps.templateApi.renderSprig({
               template: templateSource
@@ -122,45 +119,6 @@ function validateWorkspaceAbsolutePath(path: string, optionName: string): void {
 
 function collectValues(value: string, previous: string[]): string[] {
   return [...previous, value];
-}
-
-function resolveRequiredTextInput(input: {
-  inline?: string;
-  file?: string;
-  inlineName: string;
-  fileName: string;
-}): string {
-  if (input.inline !== undefined && input.file !== undefined) {
-    throw new SiyuanCliError(
-      "VALIDATION_CONFLICTING_OPTIONS",
-      `Use either ${input.inlineName} or ${input.fileName}, not both`
-    );
-  }
-
-  const value = input.file !== undefined ? readTextFile(input.file) : input.inline;
-  if (value === undefined) {
-    throw new SiyuanCliError(
-      "VALIDATION_MISSING_INPUT",
-      `Missing required input: provide ${input.inlineName} or ${input.fileName}`
-    );
-  }
-
-  return value;
-}
-
-function readTextFile(path: string): string {
-  try {
-    return readFileSync(path, "utf8");
-  } catch (error) {
-    throw new SiyuanCliError(
-      "VALIDATION_FILE_READ_FAILED",
-      `Could not read input file: ${path}`,
-      {
-        path,
-        message: error instanceof Error ? error.message : String(error)
-      }
-    );
-  }
 }
 
 async function executeCommand(input: {

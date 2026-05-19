@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { SiyuanCliError } from "../core/errors.js";
+import { readStdin } from "./stdin.js";
 
+/** Simple inline-only resolver for short non-content options like --keyword. */
 export function resolveOptionalTextInput(input: {
   inline?: string;
   file?: string;
@@ -17,24 +19,41 @@ export function resolveOptionalTextInput(input: {
   return input.file !== undefined ? readTextFile(input.file) : input.inline;
 }
 
-export function resolveRequiredTextInput(input: {
-  inline?: string;
+/**
+ * Resolve text input with priority: file > stdin.
+ * Use this for write commands that should accept heredoc/piped input.
+ */
+export async function resolveTextInput(options: {
   file?: string;
-  inlineName: string;
   fileName: string;
-}): string {
-  const value = resolveOptionalTextInput(input);
-  if (value === undefined) {
+  required: true;
+}): Promise<string>;
+export async function resolveTextInput(options: {
+  file?: string;
+  fileName: string;
+  required: false;
+}): Promise<string | undefined>;
+export async function resolveTextInput(options: {
+  file?: string;
+  fileName: string;
+  required: boolean;
+}): Promise<string | undefined> {
+  if (options.file !== undefined) return readTextFile(options.file);
+
+  const stdinData = await readStdin();
+  if (stdinData) return stdinData;
+
+  if (options.required) {
     throw new SiyuanCliError(
       "VALIDATION_MISSING_INPUT",
-      `Missing required input: provide ${input.inlineName} or ${input.fileName}`
+      `Missing required input: provide ${options.fileName} or stdin`
     );
   }
 
-  return value;
+  return undefined;
 }
 
-function readTextFile(path: string): string {
+export function readTextFile(path: string): string {
   try {
     return readFileSync(path, "utf8");
   } catch (error) {

@@ -8,7 +8,9 @@ This workflow is best for idempotent create-or-append text. It is not the right 
 Replace placeholder values such as `nb-1` and `doc-1` with real notebook or document ids from the target instance.
 
 ```bash
-sy workflow doc-upsert --notebook nb-1 --path /Projects/Alpha --append "Follow-up note" --json
+sy workflow doc-upsert --notebook nb-1 --path /Projects/Alpha --json <<'EOF'
+Follow-up note
+EOF
 ```
 
 Check:
@@ -25,7 +27,9 @@ Check:
 
 ```bash
 sy doc resolve-path --path /Projects/Alpha --json
-sy block append --parent-id doc-1 --data "Meeting summary" --json
+sy block append --parent-id doc-1 --json <<'EOF'
+Meeting summary
+EOF
 ```
 
 If the task is path/id translation rather than mutation orchestration, prefer the `path` helpers:
@@ -37,15 +41,26 @@ sy path block-root --id block-1 --json
 
 ## Create a document from multiline Markdown
 
-Use `--markdown-file` for multiline content so shells do not write literal `\n` text.
-If the file was generated just for this command, write it under the current working directory, pass the absolute path to `--markdown-file`, and add `--cleanup-input-file` so a successful write deletes it automatically.
+Default path: stdin heredoc. No file management, no shell escaping, works for content up to ~256KB.
+
+```bash
+sy doc create --notebook nb-1 --path /Projects/Alpha --json <<'EOF'
+# Alpha
+
+- status: `todo`
+- owner: `agent`
+EOF
+```
+
+Fallback path: `--markdown-file` + `--cleanup-input-file` for content >256KB or already stored in a file.
+If the file was generated just for this command, write it under the current working directory, pass the absolute path, and add `--cleanup-input-file` so a successful write deletes it automatically.
 In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for these one-off input files.
 
 ```bash
 WORKDIR="$(pwd)"
 INPUT_FILE="$WORKDIR/.sy-input-alpha.md"
 cat > "$INPUT_FILE" <<'EOF'
-# Alpha
+# Alpha (long document >256KB)
 
 - status: `todo`
 - owner: `agent`
@@ -55,9 +70,18 @@ sy doc create --notebook nb-1 --path /Projects/Alpha --markdown-file "$INPUT_FIL
 
 ## Append multiline block content
 
-Use `--data-file` for multiline comments, reports, and structured blocks.
-If the file was generated just for this command, write it under the current working directory, pass the absolute path to `--data-file`, and add `--cleanup-input-file` so a successful append deletes it automatically.
-In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for these one-off input files.
+Default path: stdin heredoc. No file management needed.
+
+```bash
+sy block append --parent-id doc-1 --json <<'EOF'
+- source_block: `doc-1`
+  author: `agent`
+  comment_status: `open`
+  body: Follow-up note
+EOF
+```
+
+Fallback path: `--data-file` + `--cleanup-input-file` for content >256KB or already stored in a file.
 
 ```bash
 WORKDIR="$(pwd)"
@@ -65,8 +89,7 @@ INPUT_FILE="$WORKDIR/.sy-input-comment.md"
 cat > "$INPUT_FILE" <<'EOF'
 - source_block: `doc-1`
   author: `agent`
-  comment_status: `open`
-  body: Follow-up note
+  body: Follow-up note (very long content >256KB)
 EOF
 sy block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
 ```
@@ -101,7 +124,9 @@ sy template render \
 Use `template render-sprig` for raw template rendering without document context:
 
 ```bash
-sy template render-sprig --template 'Hello {{ "world" | upper }}' --json
+sy template render-sprig --json <<'EOF'
+Hello {{ "world" | upper }}
+EOF
 ```
 
 Do not retry either command with `--var` or `--vars`. The current CLI rejects them.
@@ -112,7 +137,9 @@ Use these commands when an agent needs durable but bounded artifacts for reports
 If the source file for `stage-put` is agent-generated, create it under the current working directory, pass an absolute path, and avoid `/tmp` or `$TMPDIR` in sandboxed environments.
 
 ```bash
-sy file put-report --name review.md --content "# Review" --overwrite --json
+sy file put-report --name review.md --overwrite --json <<'EOF'
+# Review
+EOF
 sy file list --scope report --json
 sy file get --scope report --name review.md --json
 WORKDIR="$(pwd)"

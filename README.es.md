@@ -50,17 +50,28 @@ Lista los cuadernos disponibles antes de empezar a trabajar:
 npm run dev -- notebook list --json
 ```
 
-Crea una nota de proyecto o una nota diaria desde la terminal:
+Crea una nota de proyecto o diaria — la ruta predeterminada es stdin heredoc (sin escapes de shell, sin límite ARG_MAX):
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+# Nota del Proyecto
+
+Contenido con `code`, $HOME, "comillas" — todo seguro.
+EOF
 ```
 
-Añade una nota de seguimiento después de una reunión o llamada:
+Añade seguimiento tras una reunión — stdin heredoc por defecto:
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
+npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+## Seguimiento
+
+- [ ] Tarea 1
+- [ ] Tarea 2
+EOF
 ```
+
+Para contenido >256KB o ya almacenado en archivo, usa `--markdown-file` / `--data-file`.
 
 Consulta datos de notas en bloque cuando necesites inspeccionar u organizar contenido:
 

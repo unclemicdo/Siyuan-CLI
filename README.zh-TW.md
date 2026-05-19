@@ -50,17 +50,28 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 npm run dev -- notebook list --json
 ```
 
-從終端建立一篇專案文件或日報：
+從終端建立一篇專案文件或日報——預設使用 stdin heredoc（無需 shell 跳脫、無 ARG_MAX 限制）：
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+# 專案文件
+
+內容可包含 `code`、$HOME、"引號"——全部安全。
+EOF
 ```
 
-開完會後，給既有文件追加一條跟進記錄：
+開完會後，給既有文件追加跟進記錄——預設使用 stdin heredoc：
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
+npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+## 會議跟進
+
+- [ ] 待辦事項 1
+- [ ] 待辦事項 2
+EOF
 ```
+
+超過 ~256KB 或內容已存在於檔案時，使用 `--markdown-file` / `--data-file` 回退路徑。
 
 當你需要批次查看或整理內容時，先跑一條 SQL 查詢：
 

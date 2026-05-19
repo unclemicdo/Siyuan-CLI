@@ -42,50 +42,63 @@ describe("file commands", () => {
       write
     );
 
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "file",
-      "put-cache",
-      "--name",
-      "feed.json",
-      "--content",
-      "{\"ok\":true}",
-      "--json"
-    ]);
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "file",
-      "put-export",
-      "--name",
-      "export.md",
-      "--content",
-      "# Export",
-      "--json"
-    ]);
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "file",
-      "put-report",
-      "--name",
-      "daily.txt",
-      "--content",
-      "Summary",
-      "--json"
-    ]);
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "file",
-      "stage-put",
-      "--name",
-      "draft.md",
-      "--content",
-      "Staged",
-      "--json"
-    ]);
+    const dataDir = mkdtempSync(join(tmpdir(), "siyuan-cli-file-put-"));
+    const cachePath = join(dataDir, "feed.json");
+    const exportPath = join(dataDir, "export.md");
+    const reportPath = join(dataDir, "daily.txt");
+    const stagePath = join(dataDir, "draft.md");
+    writeFileSync(cachePath, "{\"ok\":true}", "utf8");
+    writeFileSync(exportPath, "# Export", "utf8");
+    writeFileSync(reportPath, "Summary", "utf8");
+    writeFileSync(stagePath, "Staged", "utf8");
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "file",
+        "put-cache",
+        "--name",
+        "feed.json",
+        "--content-file",
+        cachePath,
+        "--json"
+      ]);
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "file",
+        "put-export",
+        "--name",
+        "export.md",
+        "--content-file",
+        exportPath,
+        "--json"
+      ]);
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "file",
+        "put-report",
+        "--name",
+        "daily.txt",
+        "--content-file",
+        reportPath,
+        "--json"
+      ]);
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "file",
+        "stage-put",
+        "--name",
+        "draft.md",
+        "--content-file",
+        stagePath,
+        "--json"
+      ]);
+    } finally {
+      rmSync(dataDir, { recursive: true, force: true });
+    }
 
     expect(put).toHaveBeenNthCalledWith(1, {
       path: "data/.sy-cli/cache/feed.json",
@@ -271,17 +284,24 @@ describe("file commands", () => {
       write
     );
 
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "file",
-      "put-cache",
-      "--name",
-      "feed.json",
-      "--content",
-      "{}",
-      "--json"
-    ]);
+    const errDir = mkdtempSync(join(tmpdir(), "siyuan-cli-file-error-"));
+    const errPath = join(errDir, "data.json");
+    writeFileSync(errPath, "{}", "utf8");
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "file",
+        "put-cache",
+        "--name",
+        "feed.json",
+        "--content-file",
+        errPath,
+        "--json"
+      ]);
+    } finally {
+      rmSync(errDir, { recursive: true, force: true });
+    }
 
     const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
     expect(payload).toEqual(

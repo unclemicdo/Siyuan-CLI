@@ -111,17 +111,24 @@ describe("template commands", () => {
     const renderSprig = vi.fn(async () => ({}));
     const { cli } = createTemplateCli({ render, renderSprig }, write);
 
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "template",
-      "render-sprig",
-      "--template",
-      "{{ .title }}",
-      "--var",
-      "title=Daily",
-      "--json"
-    ]);
+    const tplDir = mkdtempSync(join(tmpdir(), "siyuan-cli-template-"));
+    const tplPath = join(tplDir, "tpl.txt");
+    writeFileSync(tplPath, "{{ .title }}", "utf8");
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "template",
+        "render-sprig",
+        "--template-file",
+        tplPath,
+        "--var",
+        "title=Daily",
+        "--json"
+      ]);
+    } finally {
+      rmSync(tplDir, { recursive: true, force: true });
+    }
 
     expect(renderSprig).not.toHaveBeenCalled();
     const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
@@ -185,17 +192,24 @@ describe("template commands", () => {
     const renderSprig = vi.fn(async () => ({}));
     const { cli } = createTemplateCli({ render, renderSprig }, write);
 
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "template",
-      "render-sprig",
-      "--template",
-      "{{ .title }}",
-      "--var",
-      "title",
-      "--json"
-    ]);
+    const tplDir = mkdtempSync(join(tmpdir(), "siyuan-cli-template-2-"));
+    const tplPath = join(tplDir, "tpl.txt");
+    writeFileSync(tplPath, "{{ .title }}", "utf8");
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "template",
+        "render-sprig",
+        "--template-file",
+        tplPath,
+        "--var",
+        "title",
+        "--json"
+      ]);
+    } finally {
+      rmSync(tplDir, { recursive: true, force: true });
+    }
 
     expect(renderSprig).not.toHaveBeenCalled();
     const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));

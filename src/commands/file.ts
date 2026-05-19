@@ -7,7 +7,7 @@ import {
   resolveTempPath
 } from "../services/managed-paths.js";
 import { cleanupInputFile } from "../utils/input-file-cleanup.js";
-import { resolveRequiredTextInput } from "../utils/text-input.js";
+import { resolveTextInput } from "../utils/text-input.js";
 
 export type WritableFileScope = "cache" | "export" | "report";
 export type ReadableFileScope = WritableFileScope;
@@ -103,7 +103,6 @@ export function registerFileCommands(
   file
     .command("stage-put")
     .requiredOption("--name <name>")
-    .option("--content <text>")
     .option("--content-file <path>")
     .option("--overwrite")
     .option("--cleanup-input-file")
@@ -111,17 +110,15 @@ export function registerFileCommands(
     .action(
       async (options: {
         name: string;
-        content?: string;
         contentFile?: string;
         overwrite?: boolean;
         cleanupInputFile?: boolean;
         json?: boolean;
       }) => {
-        const content = resolveRequiredTextInput({
-          inline: options.content,
+        const content = await resolveTextInput({
           file: options.contentFile,
-          inlineName: "--content",
-          fileName: "--content-file"
+          fileName: "--content-file",
+          required: true
         });
 
         await executeCommand({
@@ -168,7 +165,6 @@ function registerPutCommand(
   file
     .command(name)
     .requiredOption("--name <name>")
-    .option("--content <text>")
     .option("--content-file <path>")
     .option("--overwrite")
     .option("--cleanup-input-file")
@@ -176,17 +172,15 @@ function registerPutCommand(
     .action(
       async (options: {
         name: string;
-        content?: string;
         contentFile?: string;
         overwrite?: boolean;
         cleanupInputFile?: boolean;
         json?: boolean;
       }) => {
-        const content = resolveRequiredTextInput({
-          inline: options.content,
+        const content = await resolveTextInput({
           file: options.contentFile,
-          inlineName: "--content",
-          fileName: "--content-file"
+          fileName: "--content-file",
+          required: true
         });
 
         await executeCommand({

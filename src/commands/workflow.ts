@@ -3,7 +3,9 @@ import { z } from "zod";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
 import { assertReadOnlySql } from "../services/sql-safety.js";
+import { cleanupInputFile } from "../utils/input-file-cleanup.js";
 import { readStdin } from "../utils/stdin.js";
+import { resolveTextInput } from "../utils/text-input.js";
 import {
   blockBatch,
   type BlockBatchOperation
@@ -53,24 +55,39 @@ export function registerWorkflowCommands(
     .command("doc-upsert")
     .requiredOption("--notebook <id>")
     .requiredOption("--path <path>")
-    .option("--append <text>")
+    .option("--append-file <path>")
+    .option("--cleanup-input-file")
     .option("--json")
     .action(
       async (options: {
         notebook: string;
         path: string;
-        append?: string;
+        appendFile?: string;
+        cleanupInputFile?: boolean;
         json?: boolean;
       }) => {
+        const append = await resolveTextInput({
+          file: options.appendFile,
+          fileName: "--append-file",
+          required: false
+        });
+
         await executeCommand({
           command: "workflow.doc-upsert",
           json: options.json,
-          action: () =>
-            docUpsert(deps.workflowApi, {
+          action: async () => {
+            const result = await docUpsert(deps.workflowApi, {
               notebook: options.notebook,
               path: options.path,
-              append: options.append
-            }),
+              append
+            });
+
+            if (options.cleanupInputFile && options.appendFile) {
+              cleanupInputFile(options.appendFile);
+            }
+
+            return result;
+          },
           write: deps.write
         });
       }

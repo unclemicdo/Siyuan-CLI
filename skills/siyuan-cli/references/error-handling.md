@@ -44,7 +44,7 @@ Action:
 ## `VALIDATION_*`
 
 - `unknown option`: command spelling or flags do not match the current CLI
-- `VALIDATION_MISSING_INPUT`: a required `--data`, `--data-file`, `--markdown`, `--markdown-file`, or similar input is missing
+- `VALIDATION_MISSING_INPUT`: no `--data-file`, `--markdown-file`, `--content-file`, `--append-file`, `--template-file`, or stdin content was provided
 - `VALIDATION_CONFLICTING_OPTIONS`: mutually exclusive flags were passed together
 - `VALIDATION_INVALID_JSON`: structured JSON input such as `--attrs`, `--operations`, or `--conf` is malformed
 - `VALIDATION_FILE_READ_FAILED`: the referenced input file does not exist or cannot be read

@@ -17,16 +17,17 @@
 
 | Need | Preferred command | Notes |
 | --- | --- | --- |
-| Create a new document at a known path | `doc create` | Use when the task is explicitly create-only. Prefer `doc create --markdown-file` for full multiline Markdown content. |
+| Create a new document at a known path | `doc create` | Use when the task is explicitly create-only. Prefer stdin heredoc for content; fall back to `--markdown-file` for content >256KB or already in a file. |
 | Create-or-update a document at a path | `workflow doc-upsert` | Prefer `workflow doc-upsert` only when the write is create-or-append text, not when a new document needs a full Markdown body. |
 | Convert path to document id | `doc resolve-path` | Prefer before block mutations when only a path is known. |
 | Resolve one or many paths and ids with helper semantics | `path ...` | Use `path doc-id`, `doc-ids`, `doc-hpath`, `doc-path`, `block-doc`, `block-root`, or `block-hpath` when the task is primarily path/id translation. |
-| Append text to known parent id | `block append` | Smallest direct mutation. Prefer `--data-file` for multiline Markdown. |
-| Update known block id | `block update` | Use when the target block id is already known. |
+| Append text to known parent id | `block append` | Smallest direct mutation. Prefer stdin heredoc; fall back to `--data-file` for content >256KB or already in a file. |
+| Update known block id | `block update` | Use when the target block id is already known. Prefer stdin heredoc; fall back to `--data-file`. |
+| Prepend / insert around known block | `block prepend`, `block insert-before`, `block insert-after` | All support stdin heredoc and `--data-file`. |
 | Perform many block operations | `workflow block-batch` | Prefer when the user wants batched structured results. |
 | Read or mutate an AV / database table | `av ...` | Use `av keys`, `views`, `render`, `set-cell`, and schema commands. Do not use SQL writes as a substitute. |
 | Render an official SiYuan template file | `template render` | Requires `--id` plus a workspace absolute filesystem `--path` to the `.sy` file. No CLI variable injection. |
-| Render a raw sprig template string or file | `template render-sprig` | Supports `--template` or `--template-file` only. `--var` and `--vars` are rejected. |
+| Render a raw sprig template string or file | `template render-sprig` | Accepts stdin heredoc or `--template-file`. `--var` and `--vars` are rejected. |
 | Upload a local file into SiYuan assets | `asset upload` | Use for asset ingestion, then reference the returned asset path in later note writes if needed. |
 | Save or read temporary agent artifacts safely | `file ...` | Use only managed scopes: `put-cache`, `put-export`, `put-report`, `get`, `list`, `remove`, `stage-put`, `stage-get`. Not general filesystem access. |
 | Export assets referenced by a document tree | `export resources` | Accepts a document or block `--id`, resolves the root document, and exports only referenced assets. |
@@ -40,7 +41,7 @@
 - `doc resolve-path` and `path doc-id` expect SiYuan document paths such as `/Projects/Alpha` or `/Notebook/Projects/Alpha`.
 - `template render --path` expects a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`.
 - `file ...` names are safe managed filenames, not arbitrary relative paths.
-- For agent-generated multiline input files, prefer a current-working-directory absolute path. In sandboxed environments, avoid `/tmp` and `$TMPDIR` for `--markdown-file` and `--data-file` inputs.
+- For agent-generated content, prefer stdin heredoc (no file needed). When a temp file is required (>256KB or pre-existing file), prefer a current-working-directory absolute path with `--cleanup-input-file`. In sandboxed environments, avoid `/tmp` and `$TMPDIR` for file-based inputs.
 
 ## Repo-root Fallback Rule
 

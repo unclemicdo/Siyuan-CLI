@@ -106,19 +106,26 @@ describe("doc commands", () => {
     });
     cli.exitOverride();
 
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "doc",
-      "create",
-      "--notebook",
-      "nb-1",
-      "--path",
-      "/Work/Doc",
-      "--markdown",
-      "# Hello",
-      "--json"
-    ]);
+    const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-markdown-"));
+    const markdownPath = join(tempDir, "doc.md");
+    writeFileSync(markdownPath, "# Hello", "utf8");
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "doc",
+        "create",
+        "--notebook",
+        "nb-1",
+        "--path",
+        "/Work/Doc",
+        "--markdown-file",
+        markdownPath,
+        "--json"
+      ]);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
     await cli.parseAsync([
       "node",
       "sy",
@@ -490,17 +497,24 @@ describe("block commands", () => {
       "block-1",
       "--json"
     ]);
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "block",
-      "append",
-      "--parent-id",
-      "doc-1",
-      "--data",
-      "Hello",
-      "--json"
-    ]);
+    const appendDir = mkdtempSync(join(tmpdir(), "siyuan-cli-append-"));
+    const appendPath = join(appendDir, "data.md");
+    writeFileSync(appendPath, "Hello", "utf8");
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "append",
+        "--parent-id",
+        "doc-1",
+        "--data-file",
+        appendPath,
+        "--json"
+      ]);
+    } finally {
+      rmSync(appendDir, { recursive: true, force: true });
+    }
 
     expect(get).toHaveBeenCalledWith("block-1");
     expect(append).toHaveBeenCalledWith({
@@ -692,17 +706,24 @@ describe("block commands", () => {
     });
     cli.exitOverride();
 
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "block",
-      "append",
-      "--parent-id",
-      "doc-1",
-      "--data",
-      "line 1\nline 2",
-      "--json"
-    ]);
+    const multilineDir = mkdtempSync(join(tmpdir(), "siyuan-cli-multiline-"));
+    const multilinePath = join(multilineDir, "data.md");
+    writeFileSync(multilinePath, "line 1\nline 2", "utf8");
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "append",
+        "--parent-id",
+        "doc-1",
+        "--data-file",
+        multilinePath,
+        "--json"
+      ]);
+    } finally {
+      rmSync(multilineDir, { recursive: true, force: true });
+    }
 
     const output = String(write.mock.calls[0]?.[0] ?? "");
     expect(output).toContain("\\n");
@@ -755,59 +776,73 @@ describe("block commands", () => {
     });
     cli.exitOverride();
 
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "block",
-      "children",
-      "--id",
-      "doc-1",
-      "--json"
-    ]);
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "block",
-      "prepend",
-      "--parent-id",
-      "doc-1",
-      "--data",
-      "Top",
-      "--json"
-    ]);
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "block",
-      "insert-before",
-      "--next-id",
-      "block-2",
-      "--data",
-      "Before",
-      "--json"
-    ]);
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "block",
-      "insert-after",
-      "--previous-id",
-      "block-2",
-      "--data",
-      "After",
-      "--json"
-    ]);
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "block",
-      "update",
-      "--id",
-      "block-2",
-      "--data",
-      "Updated",
-      "--json"
-    ]);
+    const dataDir = mkdtempSync(join(tmpdir(), "siyuan-cli-block-mutations-"));
+    const prependFile = join(dataDir, "prepend.md");
+    const beforeFile = join(dataDir, "before.md");
+    const afterFile = join(dataDir, "after.md");
+    const updateFile = join(dataDir, "update.md");
+    writeFileSync(prependFile, "Top", "utf8");
+    writeFileSync(beforeFile, "Before", "utf8");
+    writeFileSync(afterFile, "After", "utf8");
+    writeFileSync(updateFile, "Updated", "utf8");
+
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "children",
+        "--id",
+        "doc-1",
+        "--json"
+      ]);
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "prepend",
+        "--parent-id",
+        "doc-1",
+        "--data-file",
+        prependFile,
+        "--json"
+      ]);
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "insert-before",
+        "--next-id",
+        "block-2",
+        "--data-file",
+        beforeFile,
+        "--json"
+      ]);
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "insert-after",
+        "--previous-id",
+        "block-2",
+        "--data-file",
+        afterFile,
+        "--json"
+      ]);
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "block",
+        "update",
+        "--id",
+        "block-2",
+        "--data-file",
+        updateFile,
+        "--json"
+      ]);
+    } finally {
+      rmSync(dataDir, { recursive: true, force: true });
+    }
     await cli.parseAsync([
       "node",
       "sy",

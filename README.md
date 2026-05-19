@@ -50,19 +50,23 @@ List available notebooks before you start working:
 npm run dev -- notebook list --json
 ```
 
-Create a project note or daily note from the terminal:
+Create a project note or daily note — default path is stdin heredoc (no shell escaping, no ARG_MAX limit):
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+# Project Note
+
+Content with `code`, $HOME, "quotes" — all safe.
+EOF
 ```
 
-For multiline Markdown, prefer a file so shells do not write literal `\n` text:
+For content already in a file, or documents larger than ~256KB, use `--markdown-file`:
 
 ```bash
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
 ```
 
-If the Markdown file is agent-generated and only needed for this write, create it under the current working directory, pass an absolute path, and add `--cleanup-input-file` to delete it after a successful write. In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for these one-off files:
+For agent-generated one-off files, add `--cleanup-input-file` to delete the file after a successful write:
 
 ```bash
 WORKDIR="$(pwd)"
@@ -70,19 +74,24 @@ INPUT_FILE="$WORKDIR/.sy-input-note.md"
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
-Append a follow-up note after a meeting or call:
+Append a follow-up note after a meeting — stdin heredoc is the default:
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
+npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+## Meeting Follow-up
+
+- [ ] Action item 1
+- [ ] Action item 2
+EOF
 ```
 
-For multiline block content, prefer `--data-file`:
+For multiline block content already in a file, or content larger than ~256KB, use `--data-file`:
 
 ```bash
 npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
 ```
 
-For agent-generated one-off input files, create them under the current working directory, pass an absolute path, and add `--cleanup-input-file` to remove the file after a successful append. In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for these one-off files:
+Agent-generated one-off input files with auto-cleanup:
 
 ```bash
 WORKDIR="$(pwd)"

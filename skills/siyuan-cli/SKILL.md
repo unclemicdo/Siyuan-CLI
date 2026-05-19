@@ -16,8 +16,9 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 - If global `sy ...` is installed and available, prefer using it directly.
 - If global `sy ...` is not available, fall back to `npm run dev -- ...` only when the current working directory is this repository root.
 - Prefer workflow commands when they remove orchestration without hiding important behavior.
-- Prefer `doc create --markdown-file` for multiline document creation and `block append --data-file` for multiline block appends. Do not assume other block mutations accept file-input flags.
-- If the file was generated just for this run, write it under the current working directory, pass the absolute path to the CLI, and add `--cleanup-input-file` only on commands that support it so successful writes remove the temporary file.
+- Prefer stdin heredoc (`<<'EOF'`) for all content writes — it avoids shell escaping, has no ARG_MAX limit, and requires a single tool call. All write commands (`doc create`, `block append/prepend/insert-before/insert-after/update`, `workflow doc-upsert`, `file put-*`, `template render-sprig`) support stdin input.
+- Fall back to `--markdown-file` / `--data-file` / `--content-file` / `--append-file` / `--template-file` when the content exceeds ~256KB or is already stored in a file. Always pair with `--cleanup-input-file` when the input file is temporary.
+- If the file was generated just for this run, write it under the current working directory, pass the absolute path to the CLI, and add `--cleanup-input-file` so successful writes remove the temporary file.
 - If a mutation target is given as a readable path rather than an id, prefer `doc resolve-path` or `path doc-id` before block-level writes.
 - Treat destructive mutations such as `doc remove`, `block remove`, `tag remove`, and broad tag renames as confirmation-worthy unless the user intent is already explicit.
 
@@ -30,8 +31,8 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 
 - Preflight live connectivity with `system version --json`.
 - Use `workflow doc-upsert` for path-based create-or-append writes.
-- Use `doc create --markdown-file` when creating a new document from a full multiline Markdown body.
-- Use `block append` or `block update` when the target id is already known.
+- Use `doc create` with stdin heredoc when creating a new document with Markdown content. Fall back to `--markdown-file` only for content >256KB or already stored in a file.
+- Use `block append`, `block update`, `block prepend`, `block insert-before`, or `block insert-after` with stdin heredoc when the target id is already known.
 - Use `path doc-id`, `path doc-hpath`, `path doc-path`, `path block-doc`, `path block-root`, and `path block-hpath` for path/id resolution. Do not assume `path block-kramdown` exists.
 - Use `av ...` for database or Attribute View reads and schema/cell changes. Do not fall back to SQL writes.
 - Use `template render` only as the official SiYuan template API passthrough.

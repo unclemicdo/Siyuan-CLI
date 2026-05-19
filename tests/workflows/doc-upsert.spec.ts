@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createCli } from "../../src/cli.js";
 import { SiyuanClient } from "../../src/core/client.js";
 import { blockBatch } from "../../src/workflows/block-batch.js";
@@ -147,19 +150,26 @@ describe("workflow commands", () => {
     const cli = createCli();
     cli.exitOverride();
 
-    await cli.parseAsync([
-      "node",
-      "sy",
-      "workflow",
-      "doc-upsert",
-      "--notebook",
-      "nb-1",
-      "--path",
-      "/Projects/New-Doc",
-      "--append",
-      "Hello",
-      "--json"
-    ]);
+    const appendDir = mkdtempSync(join(tmpdir(), "siyuan-cli-upsert-"));
+    const appendPath = join(appendDir, "append.md");
+    writeFileSync(appendPath, "Hello", "utf8");
+    try {
+      await cli.parseAsync([
+        "node",
+        "sy",
+        "workflow",
+        "doc-upsert",
+        "--notebook",
+        "nb-1",
+        "--path",
+        "/Projects/New-Doc",
+        "--append-file",
+        appendPath,
+        "--json"
+      ]);
+    } finally {
+      rmSync(appendDir, { recursive: true, force: true });
+    }
 
     expect(querySql).toHaveBeenCalledTimes(1);
     expect(createDoc).toHaveBeenCalledWith({

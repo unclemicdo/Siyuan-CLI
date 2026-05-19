@@ -50,19 +50,23 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 npm run dev -- notebook list --json
 ```
 
-从终端创建一篇项目文档或日报：
+从终端创建一篇项目文档或日报——默认使用 stdin heredoc（无需 shell 转义、无 ARG_MAX 限制）：
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+# 项目文档
+
+内容可以包含 `code`、$HOME、"引号"——全部安全。
+EOF
 ```
 
-多行 Markdown 建议使用文件输入，避免 shell 把 `\n` 当成字面文本写入：
+对于已存在于文件中的内容，或超过 ~256KB 的文档，使用 `--markdown-file`：
 
 ```bash
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
 ```
 
-如果 Markdown 文件是 agent 临时生成、写完即可删除，建议把文件创建在当前工作目录下，传入绝对路径，并加上 `--cleanup-input-file`。在沙箱环境中，不要把这类一次性输入文件放到 `/tmp` 或 `$TMPDIR`：
+如果是 agent 临时生成、写完即可删除的文件，加上 `--cleanup-input-file`：
 
 ```bash
 WORKDIR="$(pwd)"
@@ -70,19 +74,24 @@ INPUT_FILE="$WORKDIR/.sy-input-note.md"
 npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
-开完会后，给现有文档追加一条跟进记录：
+开完会后，给现有文档追加跟进记录——默认使用 stdin heredoc：
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
+npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+## 会议跟进
+
+- [ ] 待办事项 1
+- [ ] 待办事项 2
+EOF
 ```
 
-多行块内容建议使用 `--data-file`：
+对于已存在于文件中的多行块内容，或超过 ~256KB 的内容，使用 `--data-file`：
 
 ```bash
 npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
 ```
 
-如果块内容文件是 agent 临时生成、写完即可删除，建议把文件创建在当前工作目录下，传入绝对路径，并加上 `--cleanup-input-file`。在沙箱环境中，不要把这类一次性输入文件放到 `/tmp` 或 `$TMPDIR`：
+Agent 临时生成的文件自动清理：
 
 ```bash
 WORKDIR="$(pwd)"

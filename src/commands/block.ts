@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
 import { cleanupInputFile } from "../utils/input-file-cleanup.js";
-import { resolveRequiredTextInput } from "../utils/text-input.js";
+import { resolveTextInput } from "../utils/text-input.js";
 
 export interface BlockApi {
   get: (id: string) => Promise<unknown>;
@@ -62,7 +62,6 @@ export function registerBlockCommands(
   block
     .command("append")
     .requiredOption("--parent-id <id>")
-    .option("--data <value>")
     .option("--data-file <path>")
     .option("--cleanup-input-file")
     .option("--data-type <type>", "markdown or dom", "markdown")
@@ -70,17 +69,15 @@ export function registerBlockCommands(
     .action(
       async (options: {
         parentId: string;
-        data?: string;
         dataFile?: string;
         cleanupInputFile?: boolean;
         dataType: "markdown" | "dom";
         json?: boolean;
       }) => {
-        const data = resolveRequiredTextInput({
-          inline: options.data,
+        const data = await resolveTextInput({
           file: options.dataFile,
-          inlineName: "--data",
-          fileName: "--data-file"
+          fileName: "--data-file",
+          required: true
         });
 
         await executeCommand({
@@ -120,25 +117,40 @@ export function registerBlockCommands(
   block
     .command("prepend")
     .requiredOption("--parent-id <id>")
-    .requiredOption("--data <value>")
+    .option("--data-file <path>")
+    .option("--cleanup-input-file")
     .option("--data-type <type>", "markdown or dom", "markdown")
     .option("--json")
     .action(
       async (options: {
         parentId: string;
-        data: string;
+        dataFile?: string;
+        cleanupInputFile?: boolean;
         dataType: "markdown" | "dom";
         json?: boolean;
       }) => {
+        const data = await resolveTextInput({
+          file: options.dataFile,
+          fileName: "--data-file",
+          required: true
+        });
+
         await executeCommand({
           command: "block.prepend",
           json: options.json,
-          action: () =>
-            deps.blockApi.prepend({
+          action: async () => {
+            const result = await deps.blockApi.prepend({
               parentID: options.parentId,
-              data: options.data,
+              data,
               dataType: options.dataType
-            }),
+            });
+
+            if (options.cleanupInputFile && options.dataFile) {
+              cleanupInputFile(options.dataFile);
+            }
+
+            return result;
+          },
           write: deps.write
         });
       }
@@ -147,25 +159,40 @@ export function registerBlockCommands(
   block
     .command("insert-before")
     .requiredOption("--next-id <id>")
-    .requiredOption("--data <value>")
+    .option("--data-file <path>")
+    .option("--cleanup-input-file")
     .option("--data-type <type>", "markdown or dom", "markdown")
     .option("--json")
     .action(
       async (options: {
         nextId: string;
-        data: string;
+        dataFile?: string;
+        cleanupInputFile?: boolean;
         dataType: "markdown" | "dom";
         json?: boolean;
       }) => {
+        const data = await resolveTextInput({
+          file: options.dataFile,
+          fileName: "--data-file",
+          required: true
+        });
+
         await executeCommand({
           command: "block.insert-before",
           json: options.json,
-          action: () =>
-            deps.blockApi.insertBefore({
+          action: async () => {
+            const result = await deps.blockApi.insertBefore({
               nextID: options.nextId,
-              data: options.data,
+              data,
               dataType: options.dataType
-            }),
+            });
+
+            if (options.cleanupInputFile && options.dataFile) {
+              cleanupInputFile(options.dataFile);
+            }
+
+            return result;
+          },
           write: deps.write
         });
       }
@@ -174,25 +201,40 @@ export function registerBlockCommands(
   block
     .command("insert-after")
     .requiredOption("--previous-id <id>")
-    .requiredOption("--data <value>")
+    .option("--data-file <path>")
+    .option("--cleanup-input-file")
     .option("--data-type <type>", "markdown or dom", "markdown")
     .option("--json")
     .action(
       async (options: {
         previousId: string;
-        data: string;
+        dataFile?: string;
+        cleanupInputFile?: boolean;
         dataType: "markdown" | "dom";
         json?: boolean;
       }) => {
+        const data = await resolveTextInput({
+          file: options.dataFile,
+          fileName: "--data-file",
+          required: true
+        });
+
         await executeCommand({
           command: "block.insert-after",
           json: options.json,
-          action: () =>
-            deps.blockApi.insertAfter({
+          action: async () => {
+            const result = await deps.blockApi.insertAfter({
               previousID: options.previousId,
-              data: options.data,
+              data,
               dataType: options.dataType
-            }),
+            });
+
+            if (options.cleanupInputFile && options.dataFile) {
+              cleanupInputFile(options.dataFile);
+            }
+
+            return result;
+          },
           write: deps.write
         });
       }
@@ -201,25 +243,40 @@ export function registerBlockCommands(
   block
     .command("update")
     .requiredOption("--id <id>")
-    .requiredOption("--data <value>")
+    .option("--data-file <path>")
+    .option("--cleanup-input-file")
     .option("--data-type <type>", "markdown or dom", "markdown")
     .option("--json")
     .action(
       async (options: {
         id: string;
-        data: string;
+        dataFile?: string;
+        cleanupInputFile?: boolean;
         dataType: "markdown" | "dom";
         json?: boolean;
       }) => {
+        const data = await resolveTextInput({
+          file: options.dataFile,
+          fileName: "--data-file",
+          required: true
+        });
+
         await executeCommand({
           command: "block.update",
           json: options.json,
-          action: () =>
-            deps.blockApi.update({
+          action: async () => {
+            const result = await deps.blockApi.update({
               id: options.id,
-              data: options.data,
+              data,
               dataType: options.dataType
-            }),
+            });
+
+            if (options.cleanupInputFile && options.dataFile) {
+              cleanupInputFile(options.dataFile);
+            }
+
+            return result;
+          },
           write: deps.write
         });
       }

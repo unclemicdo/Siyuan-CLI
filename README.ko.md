@@ -50,17 +50,28 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 npm run dev -- notebook list --json
 ```
 
-터미널에서 프로젝트 노트나 일일 노트를 만듭니다:
+터미널에서 프로젝트 노트나 일일 노트를 만듭니다 — 기본 경로는 stdin heredoc입니다 (셸 이스케이프 불필요, ARG_MAX 제한 없음):
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown "# Hello" --json
+npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+# 프로젝트 노트
+
+`code`, $HOME, "따옴표"를 포함한 내용 — 모두 안전합니다.
+EOF
 ```
 
-회의나 통화 후 후속 메모를 추가합니다:
+회의나 통화 후 후속 메모를 추가합니다 — 기본은 stdin heredoc입니다:
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --data "Follow-up note" --json
+npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+## 후속 조치
+
+- [ ] 할 일 1
+- [ ] 할 일 2
+EOF
 ```
+
+256KB를 초과하거나 이미 파일에 저장된 콘텐츠는 `--markdown-file` / `--data-file` 폴백을 사용하세요.
 
 내용을 점검하거나 정리해야 할 때 노트 데이터를 한꺼번에 조회합니다:
 

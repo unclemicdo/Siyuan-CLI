@@ -239,16 +239,16 @@ describe("bootstrap", () => {
     expect(sharedSkill).toContain("If global `sy ...` is not available, fall back to `npm run dev -- ...`");
     expect(sharedSkill).toContain("Do not assume `npm run dev -- ...` is available from arbitrary directories");
     expect(sharedSkill).toContain(
-      "Prefer `doc create --markdown-file` for multiline document creation and `block append --data-file`"
+      "Prefer stdin heredoc (`<<'EOF'`) for all content writes"
     );
-    expect(sharedSkill).toContain("Do not assume other block mutations accept file-input flags");
+    expect(sharedSkill).toContain("Fall back to `--markdown-file`");
     expect(sharedSkill).toContain("write it under the current working directory");
     expect(sharedSkill).toContain("add `--cleanup-input-file`");
-    expect(sharedSkill).toContain("only on commands that support it");
+    expect(sharedSkill).toContain("successful writes remove the temporary file");
     expect(commandSelection).toContain("Prefer global `sy ...` when it is installed");
     expect(commandSelection).toContain("If global `sy ...` is unavailable");
     expect(commandSelection).toContain("Repo-root Fallback Rule");
-    expect(commandSelection).toContain("Prefer `doc create --markdown-file`");
+    expect(commandSelection).toContain("Prefer stdin heredoc for content");
     expect(commandSelection).toContain("Prefer `workflow doc-upsert` only when the write is create-or-append text");
     expect(commandSelection).toContain("avoid `/tmp` and `$TMPDIR`");
     expect(recipes).toContain("If `doc resolve-path` returns `null`, do not continue to `block append`");
@@ -283,10 +283,10 @@ describe("bootstrap", () => {
     expect(evals.evals.map((item) => item.id)).toEqual([1, 2, 3, 4]);
     expect(evals.evals[0]?.prompt).toContain("/Projects/Alpha");
     expect(evals.evals[0]?.expected_output).toContain("doc resolve-path");
-    expect(evals.evals[1]?.expected_output).toContain("doc create --markdown-file");
-    expect(evals.evals[1]?.expected_output).toContain("block append --data-file");
+    expect(evals.evals[1]?.expected_output).toContain("stdin heredoc for all content writes");
+    expect(evals.evals[1]?.expected_output).toContain("`--markdown-file`/`--data-file` + `--cleanup-input-file`");
     expect(evals.evals[1]?.expected_output).toContain("avoid `/tmp` and `$TMPDIR`");
-    expect(evals.evals[1]?.expected_output).toContain("not invent `--data-file`");
+    expect(evals.evals[1]?.expected_output).toContain("All block write commands");
     expect(evals.evals[2]?.prompt).toContain("VALIDATION_FILE_READ_FAILED");
     expect(evals.evals[2]?.expected_output).toContain("current working directory");
     expect(evals.evals[3]?.prompt).toContain("template render-sprig");

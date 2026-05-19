@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
 import { cleanupInputFile } from "../utils/input-file-cleanup.js";
-import { resolveOptionalTextInput } from "../utils/text-input.js";
+import { resolveTextInput } from "../utils/text-input.js";
 
 export interface DocApi {
   create: (input: {
@@ -29,7 +29,6 @@ export function registerDocCommands(program: Command, deps: DocCommandDeps): voi
     .command("create")
     .requiredOption("--notebook <id>")
     .requiredOption("--path <path>")
-    .option("--markdown <markdown>")
     .option("--markdown-file <path>")
     .option("--cleanup-input-file")
     .option("--json")
@@ -37,16 +36,14 @@ export function registerDocCommands(program: Command, deps: DocCommandDeps): voi
       async (options: {
         notebook: string;
         path: string;
-        markdown?: string;
         markdownFile?: string;
         cleanupInputFile?: boolean;
         json?: boolean;
       }) => {
-        const markdown = resolveOptionalTextInput({
-          inline: options.markdown,
+        const markdown = await resolveTextInput({
           file: options.markdownFile,
-          inlineName: "--markdown",
-          fileName: "--markdown-file"
+          fileName: "--markdown-file",
+          required: false
         });
 
         await executeCommand({
