@@ -168,18 +168,29 @@ npm install
 npm run dev -- system version --json
 ```
 
-### Global install
+### Global install (npm)
 
-Use this when you want a machine-level `sy` command:
+Quickest way to get the `sy` command:
 
 ```bash
+npm install -g @unclemicdo/siyuan-cli
+sy system version --json
+```
+
+### Global install (from source)
+
+Use this when you want to develop or modify the CLI locally:
+
+```bash
+git clone https://github.com/unclemicdo/Siyuan-CLI
+cd Siyuan-CLI
 npm install
 npm run build
 npm link
 sy system version --json
 ```
 
-Both modes require Node.js `>=22.10.0` and a configured SiYuan token/base URL.
+All modes require Node.js `>=22.10.0` and a configured SiYuan token/base URL.
 
 ## Agent Skill
 
