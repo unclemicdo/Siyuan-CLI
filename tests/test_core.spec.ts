@@ -62,11 +62,10 @@ describe("bootstrap", () => {
       "utf8"
     );
 
-    expect(englishReadme).toContain("### Project-level install");
-    expect(englishReadme).toContain("### Global install");
-    expect(chineseReadme).toContain("### 项目级安装");
-    expect(chineseReadme).toContain("### 全局安装");
-    expect(chineseReadme).not.toContain("### 1. 安装 Node.js");
+    expect(englishReadme).toContain("npm install -g @unclemicdo/siyuan-cli");
+    expect(chineseReadme).toContain("npm install -g @unclemicdo/siyuan-cli");
+    expect(englishReadme).not.toContain("### Project-level install");
+    expect(chineseReadme).not.toContain("### 项目级安装");
   });
 
   it("keeps the added capability overview aligned between english and simplified chinese readmes", () => {
