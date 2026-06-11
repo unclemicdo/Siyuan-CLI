@@ -1,6 +1,10 @@
 import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { dirname } from "node:path";
 import { Command } from "commander";
+
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json");
 import {
   registerBlockCommands,
   type BlockApi,
@@ -123,7 +127,10 @@ export interface CliDepsInput {
 
 export function createCli(input: CliDepsInput = {}): Command {
   let currentConfigFlags: SiyuanConfigFlags = {};
-  const program = new Command().name("sy").description("Agent-first CLI for SiYuan Note");
+  const program = new Command()
+    .name("sy")
+    .description("Agent-first CLI for SiYuan Note")
+    .version(version);
 
   program
     .option("--base-url <url>")
