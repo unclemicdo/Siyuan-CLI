@@ -1,7 +1,7 @@
 {
   "name": "siyuan-cli",
   "version": "0.1.0",
-  "private": true,
+  "description": "Agent-first TypeScript CLI for SiYuan Note",
   "type": "module",
   "bin": {
     "sy": "dist/index.js"
@@ -15,12 +15,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build",
     "skill:install": "node scripts/install-skill.mjs",
     "test": "vitest run",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "dependencies": {
-    "axios": "^1.7.9",
+    "axios": "^1.17.0",
     "commander": "^13.1.0",
     "zod": "^3.24.1"
   },
@@ -29,5 +30,25 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^4.1.2"
+  },
+  "keywords": [
+    "siyuan",
+    "cli",
+    "note-taking",
+    "automation",
+    "knowledge-base"
+  ],
+  "license": "MIT",
+  "author": "Siyuan CLI contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unclemicdo/Siyuan-CLI.git"
+  },
+  "homepage": "https://github.com/unclemicdo/Siyuan-CLI#readme",
+  "bugs": {
+    "url": "https://github.com/unclemicdo/Siyuan-CLI/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
