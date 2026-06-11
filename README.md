@@ -44,107 +44,51 @@ export SIYUAN_TOKEN=your-token
 export SIYUAN_BASE_URL=http://127.0.0.1:6806
 ```
 
-List available notebooks before you start working:
+List available notebooks:
 
 ```bash
 sy notebook list --json
 ```
 
-Create a project note or daily note — default path is stdin heredoc (no shell escaping, no ARG_MAX limit):
+Create a new document — content via stdin heredoc (no shell escaping, no ARG_MAX limit):
 
 ```bash
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
-# Project Note
+sy doc create --notebook nb-1 --path /Projects/MyDoc --json <<'EOF'
+# New Document
 
 Content with `code`, $HOME, "quotes" — all safe.
 EOF
 ```
 
-For content already in a file, or documents larger than ~256KB, use `--markdown-file`:
+For content already in a file, use `--markdown-file` instead.
 
-```bash
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
-```
-
-For agent-generated one-off files, add `--cleanup-input-file` to delete the file after a successful write:
-
-```bash
-WORKDIR="$(pwd)"
-INPUT_FILE="$WORKDIR/.sy-input-note.md"
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
-```
-
-Append a follow-up note after a meeting — stdin heredoc is the default:
+Append content to an existing document:
 
 ```bash
 sy block append --parent-id doc-1 --json <<'EOF'
-## Meeting Follow-up
+## Follow-up
 
 - [ ] Action item 1
 - [ ] Action item 2
 EOF
 ```
 
-For multiline block content already in a file, or content larger than ~256KB, use `--data-file`:
+Set tags on a document:
 
 ```bash
-sy block append --parent-id doc-1 --data-file ./comment.md --json
+sy tag set-doc --id doc-1 --tags "AI Agent,PDCA" --json
 ```
 
-Agent-generated one-off input files with auto-cleanup:
-
-```bash
-WORKDIR="$(pwd)"
-INPUT_FILE="$WORKDIR/.sy-input-comment.md"
-sy block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
-```
-
-Query note data in bulk when you need to inspect or organize content:
+Query your notes with SQL:
 
 ```bash
 sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
-Set native document tags using the official `tags` attribute on the document root:
+Explore commands interactively with the REPL:
 
 ```bash
-sy tag set-doc --id doc-1 --tags "AI Agent,PDCA,Knowledge Management" --json
-```
-
-Update one tag label everywhere it appears:
-
-```bash
-sy tag rename --old-label "AI Agent" --new-label "AI协作" --json
-```
-
-Remove one tag from the knowledge base:
-
-```bash
-sy tag remove --label "Deprecated Tag" --json
-```
-
-Inspect backlinks and backmentions through the official reference APIs:
-
-```bash
-sy ref backlinks --id block-1 --json
-```
-
-Query the official local graph for a document:
-
-```bash
-sy graph local --id doc-1 --query "" --json
-```
-
-Generate a simple report from SQL output for downstream workflows:
-
-```bash
-sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
-```
-
-Use the REPL when you want to explore commands interactively:
-
-```bash
-printf '%s\n' 'exit' | sy repl
+sy repl
 ```
 
 ## Requirements
@@ -297,29 +241,7 @@ Token resolution precedence:
 
 Blank environment variable values are treated as unset and fall back to the next source.
 
-## What You Can Do Today
-
-Official repo semantics verified for knowledge management:
-
-- native document tags are stored on the document root `tags` attribute
-- backlinks and backmentions are served by the official `ref` APIs
-- graph data is served by the official global and local `graph` APIs
-
-In addition to the core note, block, tag, ref, graph, and SQL flows, the CLI now also covers AV / Attribute View operations, official template rendering, managed file staging, asset upload, path/id helper lookups, and resource export. The goal is broader workflow coverage without opening unsafe write paths or forcing agents back to raw HTTP or SQL mutation patterns.
-
-Top-level commands:
-
-- `system`
-- `notebook`
-- `doc`
-- `block`
-- `attr`
-- `tag`
-- `ref`
-- `graph`
-- `sql`
-- `workflow`
-- `repl`
+## Available Commands
 
 Implemented subcommands today:
 
@@ -405,7 +327,7 @@ sy repl
 
 Exit with `exit` or `quit`.
 
-The current REPL is intentionally thin. It forwards normal CLI commands and adds only a small amount of context-aware flag injection.
+The REPL forwards normal CLI commands and supports context inheritance for common doc and block flags (`--notebook`, `--path`, `--id`, `--parent-id`), so you can avoid repeating them in consecutive commands.
 
 Built-in REPL helpers:
 
@@ -414,17 +336,6 @@ Built-in REPL helpers:
 - `use doc <id-or-path>`
 - `context`
 
-Current context injection is intentionally narrow:
-
-- `workflow doc-upsert` can inherit `--notebook` and `--path`
-- `doc create` can inherit `--notebook`
-- `doc export-md`, `doc remove`, and `doc rename` can inherit `--id`
-- `doc resolve-path` can inherit `--path`
-- `block get`, `block children`, `block update`, and `block remove` can inherit `--id`
-- `block append` and `block prepend` can inherit `--parent-id`
-
-Other commands remain plain passthrough and must be given explicit flags.
-
 `doc resolve-path` accepts either of these path styles:
 
 - the stored SiYuan `hpath`, such as `/Projects/Doc`
@@ -432,7 +343,7 @@ Other commands remain plain passthrough and must be given explicit flags.
 
 ## Current Limitations
 
-- REPL context injection covers only the command and flag pairs listed above; it is not a general-purpose shell layer.
+- REPL context injection covers only common doc and block flags; it is not a general-purpose shell layer.
 - Offline or unhealthy targets return structured `API_*` failures, but the command still exits non-zero.
 
 ## Acknowledgements

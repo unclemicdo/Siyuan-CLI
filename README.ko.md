@@ -44,23 +44,25 @@ export SIYUAN_TOKEN=your-token
 export SIYUAN_BASE_URL=http://127.0.0.1:6806
 ```
 
-작업을 시작하기 전에 사용 가능한 노트북을 확인합니다:
+사용 가능한 노트북을 확인합니다:
 
 ```bash
 sy notebook list --json
 ```
 
-터미널에서 프로젝트 노트나 일일 노트를 만듭니다 — 기본 경로는 stdin heredoc입니다 (셸 이스케이프 불필요, ARG_MAX 제한 없음):
+새 문서를 생성합니다 — stdin heredoc으로 내용 입력 (셸 이스케이프 불필요, ARG_MAX 제한 없음):
 
 ```bash
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
-# 프로젝트 노트
+sy doc create --notebook nb-1 --path /Projects/MyDoc --json <<'EOF'
+# 새 문서
 
 `code`, $HOME, "따옴표"를 포함한 내용 — 모두 안전합니다.
 EOF
 ```
 
-회의나 통화 후 후속 메모를 추가합니다 — 기본은 stdin heredoc입니다:
+내용이 이미 파일에 있다면 `--markdown-file`을 대신 사용하세요.
+
+기존 문서에 내용을 추가합니다:
 
 ```bash
 sy block append --parent-id doc-1 --json <<'EOF'
@@ -71,24 +73,22 @@ sy block append --parent-id doc-1 --json <<'EOF'
 EOF
 ```
 
-256KB를 초과하거나 이미 파일에 저장된 콘텐츠는 `--markdown-file` / `--data-file` 폴백을 사용하세요.
+문서에 태그를 설정합니다:
 
-내용을 점검하거나 정리해야 할 때 노트 데이터를 한꺼번에 조회합니다:
+```bash
+sy tag set-doc --id doc-1 --tags "AI Agent,PDCA" --json
+```
+
+SQL로 노트를 조회합니다:
 
 ```bash
 sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
-후속 워크플로를 위해 SQL 결과에서 간단한 보고서를 생성합니다:
+REPL로 명령을 대화형으로 탐색합니다:
 
 ```bash
-sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
-```
-
-명령을 대화형으로 탐색하고 싶다면 REPL을 사용합니다:
-
-```bash
-printf '%s\n' 'exit' | sy repl
+sy repl
 ```
 
 ## 요구 사항
@@ -241,27 +241,7 @@ sy system version --json
 
 빈 문자열 환경 변수 값은 미설정으로 간주되며 다음 소스로 넘어갑니다.
 
-## 현재 가능한 작업
-
-최상위 명령:
-
-- `system`
-- `notebook`
-- `doc`
-- `block`
-- `attr`
-- `tag`
-- `ref`
-- `graph`
-- `sql`
-- `workflow`
-- `repl`
-- `av`
-- `template`
-- `file`
-- `asset`
-- `path`
-- `export`
+## 사용 가능한 명령
 
 현재 구현된 하위 명령:
 
@@ -347,7 +327,7 @@ sy repl
 
 `exit` 또는 `quit` 으로 종료합니다.
 
-현재 REPL은 의도적으로 얇게 유지되어 있습니다. 일반 CLI 명령을 그대로 전달하고, 소량의 컨텍스트 기반 플래그 주입만 추가합니다.
+REPL은 일반 CLI 명령을 전달하며 일반적인 doc 및 block 플래그 (`--notebook`, `--path`, `--id`, `--parent-id`)에 대한 컨텍스트 상속을 지원하여 연속된 명령에서 반복 입력을 피할 수 있습니다.
 
 내장 REPL 도우미:
 
@@ -358,15 +338,6 @@ sy repl
 
 현재 컨텍스트 주입 범위는 의도적으로 좁습니다:
 
-- `workflow doc-upsert` 는 `--notebook` 과 `--path` 를 상속할 수 있습니다
-- `doc create` 는 `--notebook` 을 상속할 수 있습니다
-- `doc export-md`, `doc remove`, `doc rename` 은 `--id` 를 상속할 수 있습니다
-- `doc resolve-path` 는 `--path` 를 상속할 수 있습니다
-- `block get`, `block children`, `block update`, `block remove` 는 `--id` 를 상속할 수 있습니다
-- `block append` 와 `block prepend` 는 `--parent-id` 를 상속할 수 있습니다
-
-다른 명령은 그대로 전달되며 명시적인 플래그를 직접 지정해야 합니다.
-
 `doc resolve-path` 는 다음 두 가지 경로 형식을 모두 허용합니다:
 
 - `/Projects/Doc` 와 같은 저장된 SiYuan `hpath`
@@ -374,7 +345,7 @@ sy repl
 
 ## 현재 제한 사항
 
-- REPL 컨텍스트 주입은 위에 나열된 명령과 플래그 조합에만 적용되며, 범용 셸 계층이 아닙니다.
+- REPL 컨텍스트 주입은 일반적인 doc 및 block 플래그에만 적용되며, 범용 셸 계층이 아닙니다.
 - 대상이 오프라인이거나 비정상 상태이면 구조화된 `API_*` 실패를 반환하지만, 명령은 여전히 0이 아닌 종료 코드를 반환합니다.
 
 ## 감사의 말

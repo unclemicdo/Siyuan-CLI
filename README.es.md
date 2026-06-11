@@ -44,23 +44,25 @@ export SIYUAN_TOKEN=your-token
 export SIYUAN_BASE_URL=http://127.0.0.1:6806
 ```
 
-Lista los cuadernos disponibles antes de empezar a trabajar:
+Lista los cuadernos disponibles:
 
 ```bash
 sy notebook list --json
 ```
 
-Crea una nota de proyecto o diaria — la ruta predeterminada es stdin heredoc (sin escapes de shell, sin límite ARG_MAX):
+Crea un nuevo documento — contenido vía stdin heredoc (sin escapes de shell, sin límite ARG_MAX):
 
 ```bash
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
-# Nota del Proyecto
+sy doc create --notebook nb-1 --path /Projects/MyDoc --json <<'EOF'
+# Nuevo Documento
 
 Contenido con `code`, $HOME, "comillas" — todo seguro.
 EOF
 ```
 
-Añade seguimiento tras una reunión — stdin heredoc por defecto:
+Si el contenido ya está en un archivo, usa `--markdown-file`.
+
+Añade contenido a un documento existente:
 
 ```bash
 sy block append --parent-id doc-1 --json <<'EOF'
@@ -71,24 +73,22 @@ sy block append --parent-id doc-1 --json <<'EOF'
 EOF
 ```
 
-Para contenido >256KB o ya almacenado en archivo, usa `--markdown-file` / `--data-file`.
+Establece etiquetas en un documento:
 
-Consulta datos de notas en bloque cuando necesites inspeccionar u organizar contenido:
+```bash
+sy tag set-doc --id doc-1 --tags "AI Agent,PDCA" --json
+```
+
+Consulta tus notas con SQL:
 
 ```bash
 sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
-Genera un informe sencillo a partir de una salida SQL para flujos posteriores:
+Explora comandos interactivamente con el REPL:
 
 ```bash
-sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
-```
-
-Usa el REPL cuando quieras explorar comandos de forma interactiva:
-
-```bash
-printf '%s\n' 'exit' | sy repl
+sy repl
 ```
 
 ## Requisitos
@@ -241,27 +241,7 @@ Prioridad de resolución del token:
 
 Los valores vacíos en variables de entorno se tratan como no definidos y se reemplazan por la siguiente fuente.
 
-## Qué Puedes Hacer Hoy
-
-Comandos de nivel superior:
-
-- `system`
-- `notebook`
-- `doc`
-- `block`
-- `attr`
-- `tag`
-- `ref`
-- `graph`
-- `sql`
-- `workflow`
-- `repl`
-- `av`
-- `template`
-- `file`
-- `asset`
-- `path`
-- `export`
+## Comandos Disponibles
 
 Subcomandos implementados hoy:
 
@@ -347,7 +327,7 @@ sy repl
 
 Sal con `exit` o `quit`.
 
-El REPL actual es deliberadamente liviano. Reenvía los comandos normales de la CLI y solo añade una pequeña cantidad de inyección de flags basada en contexto.
+El REPL reenvía los comandos normales de la CLI y admite herencia de contexto para flags comunes de doc y block (`--notebook`, `--path`, `--id`, `--parent-id`), evitando repetirlos en comandos consecutivos.
 
 Ayudas integradas del REPL:
 
@@ -356,17 +336,6 @@ Ayudas integradas del REPL:
 - `use doc <id-or-path>`
 - `context`
 
-La inyección de contexto actual es intencionalmente limitada:
-
-- `workflow doc-upsert` puede heredar `--notebook` y `--path`
-- `doc create` puede heredar `--notebook`
-- `doc export-md`, `doc remove` y `doc rename` pueden heredar `--id`
-- `doc resolve-path` puede heredar `--path`
-- `block get`, `block children`, `block update` y `block remove` pueden heredar `--id`
-- `block append` y `block prepend` pueden heredar `--parent-id`
-
-Los demás comandos siguen siendo un passthrough simple y deben recibir flags explícitos.
-
 `doc resolve-path` acepta cualquiera de estos formatos de ruta:
 
 - el `hpath` almacenado en SiYuan, como `/Projects/Doc`
@@ -374,7 +343,7 @@ Los demás comandos siguen siendo un passthrough simple y deben recibir flags ex
 
 ## Limitaciones Actuales
 
-- La inyección de contexto del REPL solo cubre los pares comando/flag listados arriba; no es una capa de shell de propósito general.
+- La inyección de contexto del REPL solo cubre flags comunes de doc y block; no es una capa de shell de propósito general.
 - Los objetivos desconectados o con errores devuelven fallos estructurados `API_*`, pero el comando sigue saliendo con un código distinto de cero.
 
 ## Agradecimientos

@@ -50,45 +50,45 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 sy notebook list --json
 ```
 
-從終端建立一篇專案文件或日報——預設使用 stdin heredoc（無需 shell 跳脫、無 ARG_MAX 限制）：
+建立一篇新文件——透過 stdin heredoc 輸入內容（無需 shell 跳脫、無 ARG_MAX 限制）：
 
 ```bash
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
-# 專案文件
+sy doc create --notebook nb-1 --path /Projects/MyDoc --json <<'EOF'
+# 新文件
 
 內容可包含 `code`、$HOME、"引號"——全部安全。
 EOF
 ```
 
-開完會後，給既有文件追加跟進記錄——預設使用 stdin heredoc：
+如果內容已存在於檔案中，改用 `--markdown-file`。
+
+給現有文件追加內容：
 
 ```bash
 sy block append --parent-id doc-1 --json <<'EOF'
-## 會議跟進
+## 跟進
 
 - [ ] 待辦事項 1
 - [ ] 待辦事項 2
 EOF
 ```
 
-超過 ~256KB 或內容已存在於檔案時，使用 `--markdown-file` / `--data-file` 回退路徑。
+給文件設定標籤：
 
-當你需要批次查看或整理內容時，先跑一條 SQL 查詢：
+```bash
+sy tag set-doc --id doc-1 --tags "AI Agent,PDCA" --json
+```
+
+用 SQL 查詢筆記：
 
 ```bash
 sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
-把 SQL 結果整理成一份可繼續處理的簡單報告：
+透過 REPL 互動式探索命令：
 
 ```bash
-sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
-```
-
-想邊試邊看時，可以直接進入 REPL：
-
-```bash
-printf '%s\n' 'exit' | sy repl
+sy repl
 ```
 
 ## 執行要求
@@ -241,27 +241,7 @@ token 解析優先順序：
 
 空字串環境變數會被視為未設定，並回退到下一個來源。
 
-## 目前可以做什麼
-
-頂層命令：
-
-- `system`
-- `notebook`
-- `doc`
-- `block`
-- `attr`
-- `tag`
-- `ref`
-- `graph`
-- `sql`
-- `workflow`
-- `repl`
-- `av`
-- `template`
-- `file`
-- `asset`
-- `path`
-- `export`
+## 可用命令
 
 目前已實作的子命令：
 
@@ -347,6 +327,8 @@ sy repl
 
 輸入 `exit` 或 `quit` 退出。
 
+REPL 會轉送一般 CLI 命令，並支援常見的 doc 和 block 上下文繼承（`--notebook`、`--path`、`--id`、`--parent-id`），避免連續命令中重複輸入。
+
 目前的 REPL 是刻意保持輕量的。它會轉送一般 CLI 命令，只額外增加少量基於上下文的 flag 自動注入。
 
 內建的 REPL 輔助命令：
@@ -356,17 +338,6 @@ sy repl
 - `use doc <id-or-path>`
 - `context`
 
-目前支援的上下文注入範圍刻意保持得很窄：
-
-- `workflow doc-upsert` 可以繼承 `--notebook` 和 `--path`
-- `doc create` 可以繼承 `--notebook`
-- `doc export-md`、`doc remove` 和 `doc rename` 可以繼承 `--id`
-- `doc resolve-path` 可以繼承 `--path`
-- `block get`、`block children`、`block update` 和 `block remove` 可以繼承 `--id`
-- `block append` 和 `block prepend` 可以繼承 `--parent-id`
-
-其他命令仍然只是一般透傳，必須顯式傳入對應 flag。
-
 `doc resolve-path` 支援以下兩種路徑風格：
 
 - 已儲存的 SiYuan `hpath`，例如 `/Projects/Doc`
@@ -374,7 +345,7 @@ sy repl
 
 ## 目前限制
 
-- REPL 的上下文注入只覆蓋上面列出的命令與參數組合，它不是一個通用 shell 層。
+- REPL 的上下文注入只覆蓋常見的 doc 和 block 參數，它不是一個通用 shell 層。
 - 當目標離線或狀態異常時，會回傳結構化的 `API_*` 錯誤，但命令仍然會以非零狀態退出。
 
 ## 致謝

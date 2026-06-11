@@ -50,89 +50,45 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 sy notebook list --json
 ```
 
-从终端创建一篇项目文档或日报——默认使用 stdin heredoc（无需 shell 转义、无 ARG_MAX 限制）：
+创建一篇新文档——通过 stdin heredoc 输入内容（无需 shell 转义、无 ARG_MAX 限制）：
 
 ```bash
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
-# 项目文档
+sy doc create --notebook nb-1 --path /Projects/MyDoc --json <<'EOF'
+# 新文档
 
 内容可以包含 `code`、$HOME、"引号"——全部安全。
 EOF
 ```
 
-对于已存在于文件中的内容，或超过 ~256KB 的文档，使用 `--markdown-file`：
+如果内容已存在于文件中，改用 `--markdown-file`。
 
-```bash
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
-```
-
-如果是 agent 临时生成、写完即可删除的文件，加上 `--cleanup-input-file`：
-
-```bash
-WORKDIR="$(pwd)"
-INPUT_FILE="$WORKDIR/.sy-input-note.md"
-sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
-```
-
-开完会后，给现有文档追加跟进记录——默认使用 stdin heredoc：
+给现有文档追加内容：
 
 ```bash
 sy block append --parent-id doc-1 --json <<'EOF'
-## 会议跟进
+## 跟进
 
 - [ ] 待办事项 1
 - [ ] 待办事项 2
 EOF
 ```
 
-对于已存在于文件中的多行块内容，或超过 ~256KB 的内容，使用 `--data-file`：
+给文档设置标签：
 
 ```bash
-sy block append --parent-id doc-1 --data-file ./comment.md --json
+sy tag set-doc --id doc-1 --tags "AI Agent,PDCA" --json
 ```
 
-Agent 临时生成的文件自动清理：
-
-```bash
-WORKDIR="$(pwd)"
-INPUT_FILE="$WORKDIR/.sy-input-comment.md"
-sy block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
-```
-
-当你需要批量查看或整理内容时，先跑一条 SQL 查询：
+用 SQL 查询笔记：
 
 ```bash
 sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
-使用官方原生 `tags` 属性给文档设置标签：
+通过 REPL 交互式探索命令：
 
 ```bash
-sy tag set-doc --id doc-1 --tags "AI Agent,PDCA,知识管理" --json
-```
-
-通过官方反链 API 查看反链和提及：
-
-```bash
-sy ref backlinks --id block-1 --json
-```
-
-通过官方图谱 API 获取某篇文档的本地图谱：
-
-```bash
-sy graph local --id doc-1 --query "" --json
-```
-
-把 SQL 结果整理成一个可继续处理的简单报告：
-
-```bash
-sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
-```
-
-想边试边看时，可以直接进入 REPL：
-
-```bash
-printf '%s\n' 'exit' | sy repl
+sy repl
 ```
 
 ## 运行要求
@@ -285,27 +241,7 @@ token 解析优先级：
 
 空字符串环境变量会被视为未设置，并回退到下一个来源。
 
-## 目前可以做什么
-
-已经根据思源官方仓库核实的知识管理语义：
-
-- 文档原生标签落在文档根块的 `tags` 属性
-- 反链和提及走官方 `ref` API
-- 全局图谱和本地图谱走官方 `graph` API
-
-顶层命令：
-
-- `system`
-- `notebook`
-- `doc`
-- `block`
-- `attr`
-- `tag`
-- `ref`
-- `graph`
-- `sql`
-- `workflow`
-- `repl`
+## 可用命令
 
 当前已实现的子命令：
 
@@ -391,7 +327,7 @@ sy repl
 
 输入 `exit` 或 `quit` 退出。
 
-当前的 REPL 是有意保持轻量的。它会转发普通 CLI 命令，只额外增加少量基于上下文的 flag 自动注入。
+REPL 会转发普通 CLI 命令，并支持常见的 doc 和 block 上下文继承（`--notebook`、`--path`、`--id`、`--parent-id`），避免连续命令中重复输入。
 
 内置的 REPL 辅助命令：
 
@@ -400,17 +336,6 @@ sy repl
 - `use doc <id-or-path>`
 - `context`
 
-当前支持的上下文注入范围刻意保持得很窄：
-
-- `workflow doc-upsert` 可以继承 `--notebook` 和 `--path`
-- `doc create` 可以继承 `--notebook`
-- `doc export-md`、`doc remove` 和 `doc rename` 可以继承 `--id`
-- `doc resolve-path` 可以继承 `--path`
-- `block get`、`block children`、`block update` 和 `block remove` 可以继承 `--id`
-- `block append` 和 `block prepend` 可以继承 `--parent-id`
-
-其他命令仍然只是普通透传，必须显式传入对应 flag。
-
 `doc resolve-path` 支持以下两种路径风格：
 
 - 已存储的 SiYuan `hpath`，例如 `/Projects/Doc`
@@ -418,7 +343,7 @@ sy repl
 
 ## 当前限制
 
-- REPL 的上下文注入只覆盖上面列出的命令与参数组合，它不是一个通用 shell 层。
+- REPL 的上下文注入只覆盖常见的 doc 和 block 参数，它不是一个通用 shell 层。
 - 当目标离线或状态异常时，会返回结构化的 `API_*` 错误，但命令仍然会以非零状态退出。
 
 ## 致谢
