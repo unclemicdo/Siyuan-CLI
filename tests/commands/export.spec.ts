@@ -8,6 +8,7 @@ import * as coreIndex from "../../src/core/index.js";
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = 0;
+  delete process.env.SIYUAN_TOKEN;
 });
 
 function createExportCli(
@@ -151,6 +152,7 @@ describe("export commands", () => {
   });
 
   it("default export resources resolves a doc id into /data/assets paths before calling the official endpoint", async () => {
+    process.env.SIYUAN_TOKEN = "test-token";
     const post = vi.fn(async (endpoint: string, body: unknown) => {
       if (endpoint === "/api/block/getBlockInfo") {
         return {
@@ -233,6 +235,7 @@ describe("export commands", () => {
   });
 
   it("returns a structured error when the document has no asset references", async () => {
+    process.env.SIYUAN_TOKEN = "test-token";
     const post = vi.fn(async (endpoint: string) => {
       if (endpoint === "/api/block/getBlockInfo") {
         return {
