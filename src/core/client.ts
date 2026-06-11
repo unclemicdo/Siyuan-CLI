@@ -199,6 +199,32 @@ export class SiyuanClient {
     return this.post("/api/av/removeAttributeViewKey", payload);
   }
 
+  async addAttributeViewBlocks(payload: {
+    avID: string;
+    srcs: Array<{ id: string; isDetached: boolean }>;
+  }): Promise<unknown> {
+    return this.post("/api/av/addAttributeViewBlocks", payload);
+  }
+
+  async removeAttributeViewBlocks(payload: {
+    avID: string;
+    srcIDs: string[];
+  }): Promise<unknown> {
+    return this.post("/api/av/removeAttributeViewBlocks", payload);
+  }
+
+  async setAttributeViewName(avID: string, name: string): Promise<unknown> {
+    return this.post("/api/transactions", {
+      reqId: Date.now(),
+      transactions: [
+        {
+          doOperations: [{ action: "setAttrViewName", id: avID, data: name }],
+          undoOperations: [],
+        },
+      ],
+    });
+  }
+
   async getTags(payload: {
     sort?: number;
     app: string;

@@ -431,7 +431,11 @@ function createDefaultAvApi(createClient: () => SiyuanClient): AvApi {
     setCell: async (input) => createClient().setAttributeViewBlockAttr(input),
     addKey: async (input) => createClient().addAttributeViewKey(input),
     updateKey: async (input) => createClient().updateAttributeViewKey(input),
-    removeKey: async (input) => createClient().removeAttributeViewKey(input)
+    removeKey: async (input) => createClient().removeAttributeViewKey(input),
+    addBlocks: async (input) => createClient().addAttributeViewBlocks(input),
+    removeBlocks: async (input) => createClient().removeAttributeViewBlocks(input),
+    addDetachedRows: async (input) => createClient().addAttributeViewBlocks(input),
+    setName: async (avID, name) => createClient().setAttributeViewName(avID, name)
   };
 }
 
@@ -713,7 +717,11 @@ function bindAvApi(avApi: Partial<AvApi>, fallback: AvApi): AvApi {
     setCell: avApi.setCell?.bind(avApi) ?? fallback.setCell,
     addKey: avApi.addKey?.bind(avApi) ?? fallback.addKey,
     updateKey: avApi.updateKey?.bind(avApi) ?? fallback.updateKey,
-    removeKey: avApi.removeKey?.bind(avApi) ?? fallback.removeKey
+    removeKey: avApi.removeKey?.bind(avApi) ?? fallback.removeKey,
+    addBlocks: avApi.addBlocks?.bind(avApi) ?? fallback.addBlocks,
+    removeBlocks: avApi.removeBlocks?.bind(avApi) ?? fallback.removeBlocks,
+    addDetachedRows: avApi.addDetachedRows?.bind(avApi) ?? fallback.addDetachedRows,
+    setName: avApi.setName?.bind(avApi) ?? fallback.setName
   };
 }
 

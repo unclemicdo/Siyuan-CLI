@@ -35,6 +35,8 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 - Use `block append`, `block update`, `block prepend`, `block insert-before`, or `block insert-after` with stdin heredoc when the target id is already known.
 - Use `path doc-id`, `path doc-hpath`, `path doc-path`, `path block-doc`, `path block-root`, and `path block-hpath` for path/id resolution. Do not assume `path block-kramdown` exists.
 - Use `av ...` for database or Attribute View reads and schema/cell changes. Do not fall back to SQL writes.
+  - `av add-blocks`, `av remove-blocks`, `av add-detached-rows`, `av set-name` are available for AV row and metadata mutations.
+  - For full AV creation workflow (document + AV block + columns), read `references/av-rendering.md`.
 - Use `template render` only as the official SiYuan template API passthrough.
 - Use `template render-sprig` only for raw sprig template rendering.
 - Use `file ...` only for managed `cache`, `export`, and `report` scopes plus staging under `/tmp/sy-cli/staging`.
@@ -51,8 +53,13 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 - `av set-cell` accepts plain text for text-like fields because the CLI wraps it into the API value object. For non-text fields, pass the correct `--value-type` and value shape.
 - `doc resolve-path` and `path doc-id` work with SiYuan document paths, not workspace filesystem `.sy` file paths.
 
+## AV (Attribute View) rendering
+
+- AV table rendering requires a child block of type `av` (DOM `data-type="NodeAttributeView"`). Setting block attributes alone (`custom-sy-av-view` or `data-av-id` on the root block) does not trigger AV rendering. See `references/av-rendering.md` for the full creation workflow, sy CLI equivalents, core principles, and row mutations (`add-blocks`, `remove-blocks`, `add-detached-rows`, `set-name`).
+
 ## Routing
 
+- Read `references/av-rendering.md` when the task involves AV creation, rendering, AV row/column mutations, or the principles of `data-av-id` vs `custom-sy-av-view`.
 - Read `references/command-selection.md` when choosing commands.
 - Read `references/knowledge-management.md` when the task is about tags, backlinks, backmentions, graph queries, or block-ref migration.
 - Read `references/recipes.md` when the task spans multiple CLI steps.

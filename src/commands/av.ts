@@ -58,6 +58,10 @@ export interface AvApi {
     keyID: string;
     removeRelationDest?: boolean;
   }) => Promise<unknown>;
+  addBlocks: (input: { avID: string; srcs: Array<{ id: string; isDetached: boolean }> }) => Promise<unknown>;
+  removeBlocks: (input: { avID: string; srcIDs: string[] }) => Promise<unknown>;
+  addDetachedRows: (input: { avID: string; srcs: Array<{ id: string; isDetached: boolean }> }) => Promise<unknown>;
+  setName: (avID: string, name: string) => Promise<unknown>;
 }
 
 export interface AvCommandDeps {
@@ -340,6 +344,88 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
               removeRelationDest: options.removeRelationDest
             });
           },
+          write: deps.write
+        });
+      }
+    );
+
+  av
+    .command("add-blocks")
+    .requiredOption("--av-id <id>")
+    .requiredOption("--block-ids <ids>")
+    .option("--json")
+    .action(
+      async (options: { avId: string; blockIds: string; json?: boolean }) => {
+        await executeCommand({
+          command: "av.add-blocks",
+          json: options.json,
+          action: () =>
+            deps.avApi.addBlocks({
+              avID: options.avId,
+              srcs: options.blockIds.split(",").map((id: string) => ({
+                id: id.trim(),
+                isDetached: false
+              }))
+            }),
+          write: deps.write
+        });
+      }
+    );
+
+  av
+    .command("remove-blocks")
+    .requiredOption("--av-id <id>")
+    .requiredOption("--src-ids <ids>")
+    .option("--json")
+    .action(
+      async (options: { avId: string; srcIds: string; json?: boolean }) => {
+        await executeCommand({
+          command: "av.remove-blocks",
+          json: options.json,
+          action: () =>
+            deps.avApi.removeBlocks({
+              avID: options.avId,
+              srcIDs: options.srcIds.split(",").map((id: string) => id.trim())
+            }),
+          write: deps.write
+        });
+      }
+    );
+
+  av
+    .command("add-detached-rows")
+    .requiredOption("--av-id <id>")
+    .requiredOption("--row-ids <ids>")
+    .option("--json")
+    .action(
+      async (options: { avId: string; rowIds: string; json?: boolean }) => {
+        await executeCommand({
+          command: "av.add-detached-rows",
+          json: options.json,
+          action: () =>
+            deps.avApi.addDetachedRows({
+              avID: options.avId,
+              srcs: options.rowIds.split(",").map((id: string) => ({
+                id: id.trim(),
+                isDetached: true
+              }))
+            }),
+          write: deps.write
+        });
+      }
+    );
+
+  av
+    .command("set-name")
+    .requiredOption("--av-id <id>")
+    .requiredOption("--name <name>")
+    .option("--json")
+    .action(
+      async (options: { avId: string; name: string; json?: boolean }) => {
+        await executeCommand({
+          command: "av.set-name",
+          json: options.json,
+          action: () => deps.avApi.setName(options.avId, options.name),
           write: deps.write
         });
       }
