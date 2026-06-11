@@ -47,13 +47,13 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 先看当前有哪些笔记本可用：
 
 ```bash
-npm run dev -- notebook list --json
+sy notebook list --json
 ```
 
 从终端创建一篇项目文档或日报——默认使用 stdin heredoc（无需 shell 转义、无 ARG_MAX 限制）：
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
 # 项目文档
 
 内容可以包含 `code`、$HOME、"引号"——全部安全。
@@ -63,7 +63,7 @@ EOF
 对于已存在于文件中的内容，或超过 ~256KB 的文档，使用 `--markdown-file`：
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
 ```
 
 如果是 agent 临时生成、写完即可删除的文件，加上 `--cleanup-input-file`：
@@ -71,13 +71,13 @@ npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown
 ```bash
 WORKDIR="$(pwd)"
 INPUT_FILE="$WORKDIR/.sy-input-note.md"
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 开完会后，给现有文档追加跟进记录——默认使用 stdin heredoc：
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+sy block append --parent-id doc-1 --json <<'EOF'
 ## 会议跟进
 
 - [ ] 待办事项 1
@@ -88,7 +88,7 @@ EOF
 对于已存在于文件中的多行块内容，或超过 ~256KB 的内容，使用 `--data-file`：
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
+sy block append --parent-id doc-1 --data-file ./comment.md --json
 ```
 
 Agent 临时生成的文件自动清理：
@@ -96,43 +96,43 @@ Agent 临时生成的文件自动清理：
 ```bash
 WORKDIR="$(pwd)"
 INPUT_FILE="$WORKDIR/.sy-input-comment.md"
-npm run dev -- block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
+sy block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 当你需要批量查看或整理内容时，先跑一条 SQL 查询：
 
 ```bash
-npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
+sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
 使用官方原生 `tags` 属性给文档设置标签：
 
 ```bash
-npm run dev -- tag set-doc --id doc-1 --tags "AI Agent,PDCA,知识管理" --json
+sy tag set-doc --id doc-1 --tags "AI Agent,PDCA,知识管理" --json
 ```
 
 通过官方反链 API 查看反链和提及：
 
 ```bash
-npm run dev -- ref backlinks --id block-1 --json
+sy ref backlinks --id block-1 --json
 ```
 
 通过官方图谱 API 获取某篇文档的本地图谱：
 
 ```bash
-npm run dev -- graph local --id doc-1 --query "" --json
+sy graph local --id doc-1 --query "" --json
 ```
 
 把 SQL 结果整理成一个可继续处理的简单报告：
 
 ```bash
-npm run dev -- workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
+sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
 ```
 
 想边试边看时，可以直接进入 REPL：
 
 ```bash
-printf '%s\n' 'exit' | npm run dev -- repl
+printf '%s\n' 'exit' | sy repl
 ```
 
 ## 运行要求
@@ -143,31 +143,19 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## 安装
 
-你可以用下面两种方式使用 Siyuan CLI。
-
-### 项目级安装
-
-适合只在这个仓库里使用，不需要全局 `sy` 命令的场景：
-
 ```bash
-git clone https://github.com/unclemicdo/Siyuan-CLI
-cd Siyuan-CLI
-npm install
-npm run dev -- system version --json
+npm install -g @unclemicdo/siyuan-cli
 ```
 
-### 全局安装
-
-适合希望机器上直接有一个全局 `sy` 命令的场景：
+然后运行：
 
 ```bash
-npm install
-npm run build
-npm link
 sy system version --json
 ```
 
-这两种方式都需要 Node.js `>=22.10.0`，并提前配置好 SiYuan token 和 base URL。
+如果是本地开发，克隆仓库后使用 `npm run dev`。
+
+`sy` 命令需要 Node.js `>=22.10.0` 并提前配置好 SiYuan token 和 base URL。
 
 ## Agent Skill
 
@@ -229,7 +217,7 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 然后运行：
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### 方式 B：使用配置文件
@@ -260,7 +248,7 @@ npm run dev -- system version --json
 然后运行：
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### 配置规则
@@ -398,7 +386,7 @@ token 解析优先级：
 启动交互式 shell：
 
 ```bash
-npm run dev -- repl
+sy repl
 ```
 
 输入 `exit` 或 `quit` 退出。

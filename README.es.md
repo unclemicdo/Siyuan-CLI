@@ -47,13 +47,13 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 Lista los cuadernos disponibles antes de empezar a trabajar:
 
 ```bash
-npm run dev -- notebook list --json
+sy notebook list --json
 ```
 
 Crea una nota de proyecto o diaria — la ruta predeterminada es stdin heredoc (sin escapes de shell, sin límite ARG_MAX):
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
 # Nota del Proyecto
 
 Contenido con `code`, $HOME, "comillas" — todo seguro.
@@ -63,7 +63,7 @@ EOF
 Añade seguimiento tras una reunión — stdin heredoc por defecto:
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+sy block append --parent-id doc-1 --json <<'EOF'
 ## Seguimiento
 
 - [ ] Tarea 1
@@ -76,19 +76,19 @@ Para contenido >256KB o ya almacenado en archivo, usa `--markdown-file` / `--dat
 Consulta datos de notas en bloque cuando necesites inspeccionar u organizar contenido:
 
 ```bash
-npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
+sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
 Genera un informe sencillo a partir de una salida SQL para flujos posteriores:
 
 ```bash
-npm run dev -- workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
+sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
 ```
 
 Usa el REPL cuando quieras explorar comandos de forma interactiva:
 
 ```bash
-printf '%s\n' 'exit' | npm run dev -- repl
+printf '%s\n' 'exit' | sy repl
 ```
 
 ## Requisitos
@@ -99,31 +99,19 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## Instalación
 
-Puedes usar Siyuan CLI de cualquiera de estas dos maneras.
-
-### Instalación a nivel de proyecto
-
-Úsala así cuando quieras ejecutar la CLI desde este repositorio sin crear un comando global `sy`:
-
 ```bash
-git clone https://github.com/unclemicdo/Siyuan-CLI
-cd Siyuan-CLI
-npm install
-npm run dev -- system version --json
+npm install -g @unclemicdo/siyuan-cli
 ```
 
-### Instalación global
-
-Úsala así cuando quieras disponer de un comando `sy` a nivel de máquina:
+Luego ejecuta:
 
 ```bash
-npm install
-npm run build
-npm link
 sy system version --json
 ```
 
-Ambos modos requieren Node.js `>=22.10.0` y un token/base URL de SiYuan ya configurados.
+Para desarrollo local, clona el repositorio y usa `npm run dev`.
+
+El comando `sy` requiere Node.js `>=22.10.0` y un token/base URL de SiYuan ya configurados.
 
 ## Skill para agentes
 
@@ -185,7 +173,7 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 Luego ejecuta:
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### Opción B: usar un archivo de configuración
@@ -216,7 +204,7 @@ Ejemplo:
 Luego ejecuta:
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### Reglas de Configuración
@@ -262,9 +250,18 @@ Comandos de nivel superior:
 - `doc`
 - `block`
 - `attr`
+- `tag`
+- `ref`
+- `graph`
 - `sql`
 - `workflow`
 - `repl`
+- `av`
+- `template`
+- `file`
+- `asset`
+- `path`
+- `export`
 
 Subcomandos implementados hoy:
 
@@ -291,6 +288,18 @@ Subcomandos implementados hoy:
 - `block remove`
 - `attr get`
 - `attr set`
+- `tag list`
+- `tag rename`
+- `tag remove`
+- `tag set-doc`
+- `ref refresh`
+- `ref backlinks`
+- `ref doc-backlinks`
+- `ref doc-backmentions`
+- `ref transfer`
+- `graph global`
+- `graph local`
+- `graph reset`
 - `sql query`
 - `sql explain-safety`
 - `workflow doc-upsert`
@@ -333,7 +342,7 @@ Formato de error:
 Inicia la shell interactiva:
 
 ```bash
-npm run dev -- repl
+sy repl
 ```
 
 Sal con `exit` o `quit`.

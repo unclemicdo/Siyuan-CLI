@@ -47,13 +47,13 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 List available notebooks before you start working:
 
 ```bash
-npm run dev -- notebook list --json
+sy notebook list --json
 ```
 
 Create a project note or daily note — default path is stdin heredoc (no shell escaping, no ARG_MAX limit):
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
 # Project Note
 
 Content with `code`, $HOME, "quotes" — all safe.
@@ -63,7 +63,7 @@ EOF
 For content already in a file, or documents larger than ~256KB, use `--markdown-file`:
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file ./note.md --json
 ```
 
 For agent-generated one-off files, add `--cleanup-input-file` to delete the file after a successful write:
@@ -71,13 +71,13 @@ For agent-generated one-off files, add `--cleanup-input-file` to delete the file
 ```bash
 WORKDIR="$(pwd)"
 INPUT_FILE="$WORKDIR/.sy-input-note.md"
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --markdown-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 Append a follow-up note after a meeting — stdin heredoc is the default:
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+sy block append --parent-id doc-1 --json <<'EOF'
 ## Meeting Follow-up
 
 - [ ] Action item 1
@@ -88,7 +88,7 @@ EOF
 For multiline block content already in a file, or content larger than ~256KB, use `--data-file`:
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --data-file ./comment.md --json
+sy block append --parent-id doc-1 --data-file ./comment.md --json
 ```
 
 Agent-generated one-off input files with auto-cleanup:
@@ -96,55 +96,55 @@ Agent-generated one-off input files with auto-cleanup:
 ```bash
 WORKDIR="$(pwd)"
 INPUT_FILE="$WORKDIR/.sy-input-comment.md"
-npm run dev -- block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
+sy block append --parent-id doc-1 --data-file "$INPUT_FILE" --cleanup-input-file --json
 ```
 
 Query note data in bulk when you need to inspect or organize content:
 
 ```bash
-npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
+sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
 Set native document tags using the official `tags` attribute on the document root:
 
 ```bash
-npm run dev -- tag set-doc --id doc-1 --tags "AI Agent,PDCA,Knowledge Management" --json
+sy tag set-doc --id doc-1 --tags "AI Agent,PDCA,Knowledge Management" --json
 ```
 
 Update one tag label everywhere it appears:
 
 ```bash
-npm run dev -- tag rename --old-label "AI Agent" --new-label "AI协作" --json
+sy tag rename --old-label "AI Agent" --new-label "AI协作" --json
 ```
 
 Remove one tag from the knowledge base:
 
 ```bash
-npm run dev -- tag remove --label "Deprecated Tag" --json
+sy tag remove --label "Deprecated Tag" --json
 ```
 
 Inspect backlinks and backmentions through the official reference APIs:
 
 ```bash
-npm run dev -- ref backlinks --id block-1 --json
+sy ref backlinks --id block-1 --json
 ```
 
 Query the official local graph for a document:
 
 ```bash
-npm run dev -- graph local --id doc-1 --query "" --json
+sy graph local --id doc-1 --query "" --json
 ```
 
 Generate a simple report from SQL output for downstream workflows:
 
 ```bash
-npm run dev -- workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
+sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
 ```
 
 Use the REPL when you want to explore commands interactively:
 
 ```bash
-printf '%s\n' 'exit' | npm run dev -- repl
+printf '%s\n' 'exit' | sy repl
 ```
 
 ## Requirements
@@ -155,42 +155,19 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## Installation
 
-You can use Siyuan CLI in either of these ways.
-
-### Project-level install
-
-Use this when you want to run the CLI from this repository without creating a global `sy` command:
-
-```bash
-git clone https://github.com/unclemicdo/Siyuan-CLI
-cd Siyuan-CLI
-npm install
-npm run dev -- system version --json
-```
-
-### Global install (npm)
-
-Quickest way to get the `sy` command:
-
 ```bash
 npm install -g @unclemicdo/siyuan-cli
-sy system version --json
 ```
 
-### Global install (from source)
-
-Use this when you want to develop or modify the CLI locally:
+Then run:
 
 ```bash
-git clone https://github.com/unclemicdo/Siyuan-CLI
-cd Siyuan-CLI
-npm install
-npm run build
-npm link
 sy system version --json
 ```
 
-All modes require Node.js `>=22.10.0` and a configured SiYuan token/base URL.
+For local development, clone the repository and use `npm run dev` instead.
+
+The `sy` command requires Node.js `>=22.10.0` and a configured SiYuan token/base URL.
 
 ## Agent Skill
 
@@ -252,7 +229,7 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 Then run:
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### Option B: Use a config file
@@ -283,7 +260,7 @@ Example:
 Then run:
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### Configuration Rules
@@ -423,7 +400,7 @@ Failure shape:
 Start the interactive shell:
 
 ```bash
-npm run dev -- repl
+sy repl
 ```
 
 Exit with `exit` or `quit`.

@@ -47,13 +47,13 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 작업을 시작하기 전에 사용 가능한 노트북을 확인합니다:
 
 ```bash
-npm run dev -- notebook list --json
+sy notebook list --json
 ```
 
 터미널에서 프로젝트 노트나 일일 노트를 만듭니다 — 기본 경로는 stdin heredoc입니다 (셸 이스케이프 불필요, ARG_MAX 제한 없음):
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
 # 프로젝트 노트
 
 `code`, $HOME, "따옴표"를 포함한 내용 — 모두 안전합니다.
@@ -63,7 +63,7 @@ EOF
 회의나 통화 후 후속 메모를 추가합니다 — 기본은 stdin heredoc입니다:
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+sy block append --parent-id doc-1 --json <<'EOF'
 ## 후속 조치
 
 - [ ] 할 일 1
@@ -76,19 +76,19 @@ EOF
 내용을 점검하거나 정리해야 할 때 노트 데이터를 한꺼번에 조회합니다:
 
 ```bash
-npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
+sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
 후속 워크플로를 위해 SQL 결과에서 간단한 보고서를 생성합니다:
 
 ```bash
-npm run dev -- workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
+sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
 ```
 
 명령을 대화형으로 탐색하고 싶다면 REPL을 사용합니다:
 
 ```bash
-printf '%s\n' 'exit' | npm run dev -- repl
+printf '%s\n' 'exit' | sy repl
 ```
 
 ## 요구 사항
@@ -99,31 +99,19 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## 설치
 
-Siyuan CLI는 다음 두 가지 방식 중 하나로 사용할 수 있습니다.
-
-### 프로젝트 단위 설치
-
-전역 `sy` 명령을 만들지 않고 이 저장소 안에서만 CLI를 실행하려면 이 방식을 사용하세요:
-
 ```bash
-git clone https://github.com/unclemicdo/Siyuan-CLI
-cd Siyuan-CLI
-npm install
-npm run dev -- system version --json
+npm install -g @unclemicdo/siyuan-cli
 ```
 
-### 전역 설치
-
-머신 전역의 `sy` 명령을 원한다면 이 방식을 사용하세요:
+그다음 실행합니다:
 
 ```bash
-npm install
-npm run build
-npm link
 sy system version --json
 ```
 
-두 방식 모두 Node.js `>=22.10.0` 과 미리 구성된 SiYuan token/base URL이 필요합니다.
+로컬 개발의 경우 저장소를 클론하고 `npm run dev`를 사용하세요.
+
+`sy` 명령은 Node.js `>=22.10.0` 과 미리 구성된 SiYuan token/base URL이 필요합니다.
 
 ## 에이전트 스킬
 
@@ -185,7 +173,7 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 그다음 실행합니다:
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### 옵션 B: 설정 파일 사용
@@ -216,7 +204,7 @@ CLI를 자주 사용한다면 이 방법이 더 적합한 경우가 많습니다
 그다음 실행합니다:
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### 설정 규칙
@@ -262,9 +250,18 @@ npm run dev -- system version --json
 - `doc`
 - `block`
 - `attr`
+- `tag`
+- `ref`
+- `graph`
 - `sql`
 - `workflow`
 - `repl`
+- `av`
+- `template`
+- `file`
+- `asset`
+- `path`
+- `export`
 
 현재 구현된 하위 명령:
 
@@ -291,6 +288,18 @@ npm run dev -- system version --json
 - `block remove`
 - `attr get`
 - `attr set`
+- `tag list`
+- `tag rename`
+- `tag remove`
+- `tag set-doc`
+- `ref refresh`
+- `ref backlinks`
+- `ref doc-backlinks`
+- `ref doc-backmentions`
+- `ref transfer`
+- `graph global`
+- `graph local`
+- `graph reset`
 - `sql query`
 - `sql explain-safety`
 - `workflow doc-upsert`
@@ -333,7 +342,7 @@ npm run dev -- system version --json
 대화형 셸을 시작합니다:
 
 ```bash
-npm run dev -- repl
+sy repl
 ```
 
 `exit` 또는 `quit` 으로 종료합니다.

@@ -47,13 +47,13 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 先看目前有哪些筆記本可用：
 
 ```bash
-npm run dev -- notebook list --json
+sy notebook list --json
 ```
 
 從終端建立一篇專案文件或日報——預設使用 stdin heredoc（無需 shell 跳脫、無 ARG_MAX 限制）：
 
 ```bash
-npm run dev -- doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
+sy doc create --notebook nb-1 --path /Projects/Siyuan-CLI --json <<'EOF'
 # 專案文件
 
 內容可包含 `code`、$HOME、"引號"——全部安全。
@@ -63,7 +63,7 @@ EOF
 開完會後，給既有文件追加跟進記錄——預設使用 stdin heredoc：
 
 ```bash
-npm run dev -- block append --parent-id doc-1 --json <<'EOF'
+sy block append --parent-id doc-1 --json <<'EOF'
 ## 會議跟進
 
 - [ ] 待辦事項 1
@@ -76,19 +76,19 @@ EOF
 當你需要批次查看或整理內容時，先跑一條 SQL 查詢：
 
 ```bash
-npm run dev -- sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
+sy sql query --stmt "SELECT id FROM blocks LIMIT 1" --json
 ```
 
 把 SQL 結果整理成一份可繼續處理的簡單報告：
 
 ```bash
-npm run dev -- workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
+sy workflow sql-report --stmt "SELECT id FROM blocks LIMIT 5" --json
 ```
 
 想邊試邊看時，可以直接進入 REPL：
 
 ```bash
-printf '%s\n' 'exit' | npm run dev -- repl
+printf '%s\n' 'exit' | sy repl
 ```
 
 ## 執行要求
@@ -99,31 +99,19 @@ printf '%s\n' 'exit' | npm run dev -- repl
 
 ## 安裝
 
-你可以用下面兩種方式使用 Siyuan CLI。
-
-### 專案級安裝
-
-適合只在這個倉庫裡使用，不需要全域 `sy` 命令的場景：
-
 ```bash
-git clone https://github.com/unclemicdo/Siyuan-CLI
-cd Siyuan-CLI
-npm install
-npm run dev -- system version --json
+npm install -g @unclemicdo/siyuan-cli
 ```
 
-### 全域安裝
-
-適合希望機器上直接有一個全域 `sy` 命令的場景：
+然後執行：
 
 ```bash
-npm install
-npm run build
-npm link
 sy system version --json
 ```
 
-這兩種方式都需要 Node.js `>=22.10.0`，並提前配置好 SiYuan token 和 base URL。
+如果是本地開發，克隆倉庫後使用 `npm run dev`。
+
+`sy` 命令需要 Node.js `>=22.10.0` 並提前配置好 SiYuan token 和 base URL。
 
 ## Agent Skill
 
@@ -185,7 +173,7 @@ export SIYUAN_BASE_URL=http://127.0.0.1:6806
 然後執行：
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### 方式 B：使用設定檔
@@ -216,7 +204,7 @@ npm run dev -- system version --json
 然後執行：
 
 ```bash
-npm run dev -- system version --json
+sy system version --json
 ```
 
 ### 設定規則
@@ -262,9 +250,18 @@ token 解析優先順序：
 - `doc`
 - `block`
 - `attr`
+- `tag`
+- `ref`
+- `graph`
 - `sql`
 - `workflow`
 - `repl`
+- `av`
+- `template`
+- `file`
+- `asset`
+- `path`
+- `export`
 
 目前已實作的子命令：
 
@@ -291,6 +288,18 @@ token 解析優先順序：
 - `block remove`
 - `attr get`
 - `attr set`
+- `tag list`
+- `tag rename`
+- `tag remove`
+- `tag set-doc`
+- `ref refresh`
+- `ref backlinks`
+- `ref doc-backlinks`
+- `ref doc-backmentions`
+- `ref transfer`
+- `graph global`
+- `graph local`
+- `graph reset`
 - `sql query`
 - `sql explain-safety`
 - `workflow doc-upsert`
@@ -333,7 +342,7 @@ token 解析優先順序：
 啟動互動式 shell：
 
 ```bash
-npm run dev -- repl
+sy repl
 ```
 
 輸入 `exit` 或 `quit` 退出。
