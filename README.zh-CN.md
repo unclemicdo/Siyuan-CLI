@@ -97,6 +97,15 @@ sy repl
 - 一个可访问的 SiYuan HTTP API 端点
 - 一个 SiYuan API token
 
+### SiYuan 版本兼容性
+
+CLI 面向稳定的 SiYuan API 构建，支持 SiYuan 3.6.5 及之后版本（含 3.8.1）。3.8.1 中两项 AV 行为发生变化，CLI 已适配：
+
+- `av set-cell` 发送 `itemID`（`--item-id` 参数）；SiYuan 3.8.1 会拒绝旧的 `rowID` 请求字段。
+- `av update-key` 通过 `/api/transactions`（`updateAttrViewCol` / `setAttrViewColIcon`）更新字段，不再调用从未注册过的 `/api/av/updateAttributeViewKey` 路由。
+
+针对 3.8.1 API 契约的 CLI 修复：`doc create` 始终发送显式 `markdown` 字段（缺失该键时 SiYuan 3.8.1 返回 `data: null` 且不创建文档）；`av add-detached-rows` 按官方 `addAttributeViewBlocks` 契约发送 `itemID`（`--row-ids` 值）及可选 `--content` 主键文本。
+
 ## 安装
 
 ```bash

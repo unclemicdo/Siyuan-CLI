@@ -97,6 +97,15 @@ sy repl
 - Un endpoint HTTP API de SiYuan accesible
 - Un token de API de SiYuan
 
+### Compatibilidad de versiones de SiYuan
+
+La CLI está orientada a la API estable de SiYuan y funciona con SiYuan 3.6.5 y posteriores, incluida 3.8.1. Dos comportamientos de AV cambiaron en 3.8.1 y ya están manejados por la CLI:
+
+- `av set-cell` envía `itemID` (la bandera `--item-id`); SiYuan 3.8.1 rechaza el campo de solicitud heredado `rowID`.
+- `av update-key` actualiza campos a través de `/api/transactions` (`updateAttrViewCol` / `setAttrViewColIcon`) en lugar de la ruta nunca registrada `/api/av/updateAttributeViewKey`.
+
+Correcciones de la CLI para el contrato de API de 3.8.1: `doc create` siempre envía un campo `markdown` explícito (si falta la clave, SiYuan 3.8.1 devuelve `data: null` sin crear el documento), y `av add-detached-rows` envía `itemID` (los valores de `--row-ids`) más un texto de clave principal opcional `--content` según el contrato oficial de `addAttributeViewBlocks`.
+
 ## Instalación
 
 ```bash

@@ -39,7 +39,7 @@
 ## Path Form Rules
 
 - `doc resolve-path` and `path doc-id` expect SiYuan document paths such as `/Projects/Alpha` or `/Notebook/Projects/Alpha`.
-- `template render --path` expects a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`.
+- `template render --path` expects a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`. On SiYuan >= 3.8.1 the path must also be inside `<data>/templates/` (symlinks resolved); any other path fails with "Path [...] is not in templates directory".
 - `file ...` names are safe managed filenames, not arbitrary relative paths.
 - For agent-generated content, prefer stdin heredoc (no file needed). When a temp file is required (>256KB or pre-existing file), prefer a current-working-directory absolute path with `--cleanup-input-file`. In sandboxed environments, avoid `/tmp` and `$TMPDIR` for file-based inputs.
 

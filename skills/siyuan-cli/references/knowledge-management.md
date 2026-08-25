@@ -192,6 +192,10 @@ Refresh backlink calculation for one block before querying again.
 
 - `--id <block-id>`: target block id
 
+### Notes
+
+- SiYuan >= 3.8.1 requires an admin, non-read-only token for this endpoint; the CLI's normal admin configuration is unaffected.
+
 ### Example
 
 ```bash
@@ -236,6 +240,10 @@ Inspect global graph data for a keyword or full graph request.
 - `--conf <json>`: inline graph config JSON
 - `--conf-file <path>`: graph config JSON file
 - `--req-id <id>`: optional request id
+
+### Notes
+
+- SiYuan >= 3.8.1 persists the `--conf` graph configuration only for admin, non-read-only tokens; non-admin runs still return the graph but the configuration is not saved.
 
 ### Example
 

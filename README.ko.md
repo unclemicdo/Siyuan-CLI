@@ -97,6 +97,15 @@ sy repl
 - 접근 가능한 SiYuan HTTP API 엔드포인트
 - SiYuan API 토큰
 
+### SiYuan 버전 호환성
+
+CLI는 안정적인 SiYuan API를 대상으로 하며 SiYuan 3.6.5 이상(3.8.1 포함)에서 동작합니다. 3.8.1에서 두 가지 AV 동작이 변경되었으며 CLI가 이미 대응하고 있습니다:
+
+- `av set-cell`은 `itemID`(`--item-id` 플래그)를 전송합니다. SiYuan 3.8.1은 레거시 `rowID` 요청 필드를 거부합니다.
+- `av update-key`는 `/api/transactions`(`updateAttrViewCol` / `setAttrViewColIcon`)를 통해 필드를 갱신하며, 등록된 적 없는 `/api/av/updateAttributeViewKey` 라우트는 사용하지 않습니다.
+
+3.8.1 API 계약에 대한 CLI 수정: `doc create`는 항상 명시적 `markdown` 필드를 전송합니다(키가 없으면 SiYuan 3.8.1은 문서를 생성하지 않고 `data: null`을 반환). `av add-detached-rows`는 공식 `addAttributeViewBlocks` 계약에 따라 `itemID`(`--row-ids` 값)와 선택적 `--content` 기본 키 텍스트를 전송합니다.
+
 ## 설치
 
 ```bash
