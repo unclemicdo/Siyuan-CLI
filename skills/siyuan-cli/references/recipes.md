@@ -101,7 +101,7 @@ Use `av keys` and `av views` first so later mutations use real ids from the targ
 ```bash
 sy av keys --id av-1 --json
 sy av views --id av-1 --json
-sy av set-cell --av-id av-1 --key-id key-1 --row-id row-1 --value "ready" --value-type text --json
+sy av set-cell --av-id av-1 --key-id key-1 --item-id row-1 --value "ready" --value-type text --json
 ```
 
 Agent note:

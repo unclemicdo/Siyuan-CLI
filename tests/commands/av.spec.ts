@@ -178,7 +178,7 @@ describe("av commands", () => {
       "av-1",
       "--key-id",
       "key-1",
-      "--row-id",
+      "--item-id",
       "row-1",
       "--value",
       "{\"label\":\"Alpha\"}",
@@ -232,7 +232,7 @@ describe("av commands", () => {
     expect(setCell).toHaveBeenCalledWith({
       avID: "av-1",
       keyID: "key-1",
-      rowID: "row-1",
+      itemID: "row-1",
       value: { text: { content: "{\"label\":\"Alpha\"}" } },
       valueType: "text"
     });
@@ -249,8 +249,7 @@ describe("av commands", () => {
       keyID: "key-2",
       keyName: "Lifecycle",
       keyType: "relation",
-      keyIcon: undefined,
-      previousKeyID: undefined
+      keyIcon: undefined
     });
     expect(removeKey).toHaveBeenCalledWith({
       avID: "av-1",
@@ -290,7 +289,7 @@ describe("av commands", () => {
       "av-1",
       "--key-id",
       "key-1",
-      "--row-id",
+      "--item-id",
       "row-1",
       "--value",
       "hello",
@@ -305,7 +304,7 @@ describe("av commands", () => {
       "av-1",
       "--key-id",
       "key-1",
-      "--row-id",
+      "--item-id",
       "row-2",
       "--value",
       "true",
@@ -320,7 +319,7 @@ describe("av commands", () => {
       "av-1",
       "--key-id",
       "key-1",
-      "--row-id",
+      "--item-id",
       "row-3",
       "--value",
       "[1,2,3]",
@@ -330,21 +329,21 @@ describe("av commands", () => {
     expect(setCell).toHaveBeenNthCalledWith(1, {
       avID: "av-1",
       keyID: "key-1",
-      rowID: "row-1",
+      itemID: "row-1",
       value: { text: { content: "hello" } },
       valueType: undefined
     });
     expect(setCell).toHaveBeenNthCalledWith(2, {
       avID: "av-1",
       keyID: "key-1",
-      rowID: "row-2",
+      itemID: "row-2",
       value: true,
       valueType: undefined
     });
     expect(setCell).toHaveBeenNthCalledWith(3, {
       avID: "av-1",
       keyID: "key-1",
-      rowID: "row-3",
+      itemID: "row-3",
       value: [1, 2, 3],
       valueType: undefined
     });
@@ -575,6 +574,202 @@ describe("av commands", () => {
     expect(process.exitCode).toBe(1);
 
     process.exitCode = previousExitCode;
+  });
+
+  it("resolves the missing name or type from av keys when updating one field", async () => {
+    const write = vi.fn(() => true);
+    const keys = vi.fn(async () => [
+      { id: "key-1", name: "Status", type: "select" }
+    ]);
+    const updateKey = vi.fn(async (input) => ({ input }));
+
+    const { cli } = createAvCli(
+      {
+        get: async () => ({}),
+        render: async () => ({}),
+        keys,
+        primaryValues: async () => ({}),
+        search: async () => ({}),
+        relationKeys: async () => ({}),
+        filterSort: async () => ({}),
+        views: async () => ({}),
+        setCell: async () => ({}),
+        addKey: async () => ({}),
+        updateKey,
+        removeKey: async () => ({})
+      },
+      write
+    );
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "av",
+      "update-key",
+      "--av-id",
+      "av-1",
+      "--key-id",
+      "key-1",
+      "--name",
+      "Lifecycle",
+      "--json"
+    ]);
+
+    expect(keys).toHaveBeenCalledWith("av-1");
+    expect(updateKey).toHaveBeenCalledWith({
+      avID: "av-1",
+      keyID: "key-1",
+      keyName: "Lifecycle",
+      keyType: "select",
+      keyIcon: undefined
+    });
+  });
+
+  it("fails update-key with a structured error when the current key cannot be resolved", async () => {
+    const write = vi.fn(() => true);
+    const previousExitCode = process.exitCode;
+    process.exitCode = undefined;
+    const updateKey = vi.fn(async () => ({}));
+
+    const { cli } = createAvCli(
+      {
+        get: async () => ({}),
+        render: async () => ({}),
+        keys: async () => [],
+        primaryValues: async () => ({}),
+        search: async () => ({}),
+        relationKeys: async () => ({}),
+        filterSort: async () => ({}),
+        views: async () => ({}),
+        setCell: async () => ({}),
+        addKey: async () => ({}),
+        updateKey,
+        removeKey: async () => ({})
+      },
+      write
+    );
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "av",
+      "update-key",
+      "--av-id",
+      "av-1",
+      "--key-id",
+      "missing",
+      "--name",
+      "Lifecycle",
+      "--json"
+    ]);
+
+    expect(updateKey).not.toHaveBeenCalled();
+    const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
+    expect(payload.ok).toBe(false);
+    expect(payload.command).toBe("av.update-key");
+    expect(payload.error.code).toBe("API_RESPONSE_ERROR");
+    expect(payload.error.message).toBe(
+      "unable to resolve current name/type for av key [missing] in av [av-1]"
+    );
+    expect(process.exitCode).toBe(1);
+
+    process.exitCode = previousExitCode;
+  });
+
+  it("updates only the icon without resolving key values", async () => {
+    const write = vi.fn(() => true);
+    const keys = vi.fn(async () => []);
+    const updateKey = vi.fn(async (input) => ({ input }));
+
+    const { cli } = createAvCli(
+      {
+        get: async () => ({}),
+        render: async () => ({}),
+        keys,
+        primaryValues: async () => ({}),
+        search: async () => ({}),
+        relationKeys: async () => ({}),
+        filterSort: async () => ({}),
+        views: async () => ({}),
+        setCell: async () => ({}),
+        addKey: async () => ({}),
+        updateKey,
+        removeKey: async () => ({})
+      },
+      write
+    );
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "av",
+      "update-key",
+      "--av-id",
+      "av-1",
+      "--key-id",
+      "key-1",
+      "--icon",
+      "iconTag",
+      "--json"
+    ]);
+
+    expect(keys).not.toHaveBeenCalled();
+    expect(updateKey).toHaveBeenCalledWith({
+      avID: "av-1",
+      keyID: "key-1",
+      keyName: undefined,
+      keyType: undefined,
+      keyIcon: "iconTag"
+    });
+  });
+
+  it("routes av add-detached-rows with itemID and content", async () => {
+    const write = vi.fn(() => true);
+    const addDetachedRows = vi.fn(async (input) => ({ input }));
+
+    const { cli } = createAvCli(
+      {
+        get: async () => ({}),
+        render: async () => ({}),
+        keys: async () => ({}),
+        primaryValues: async () => ({}),
+        search: async () => ({}),
+        relationKeys: async () => ({}),
+        filterSort: async () => ({}),
+        views: async () => ({}),
+        setCell: async () => ({}),
+        addKey: async () => ({}),
+        updateKey: async () => ({}),
+        removeKey: async () => ({}),
+        addBlocks: async () => ({}),
+        removeBlocks: async () => ({}),
+        addDetachedRows,
+        setName: async () => ({})
+      },
+      write
+    );
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "av",
+      "add-detached-rows",
+      "--av-id",
+      "av-1",
+      "--row-ids",
+      "row-1,row-2",
+      "--content",
+      "新建行",
+      "--json"
+    ]);
+
+    expect(addDetachedRows).toHaveBeenCalledWith({
+      avID: "av-1",
+      srcs: [
+        { itemID: "row-1", isDetached: true, content: "新建行" },
+        { itemID: "row-2", isDetached: true, content: "新建行" }
+      ]
+    });
   });
 
   it("writes json success payloads for av read commands", async () => {

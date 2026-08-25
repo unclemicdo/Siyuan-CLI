@@ -91,11 +91,14 @@ Explore commands interactively with the REPL:
 sy repl
 ```
 
-## Requirements
+### SiYuan version compatibility
 
-- Node.js `>=22.10.0`
-- A reachable SiYuan HTTP API endpoint
-- A SiYuan API token
+The CLI targets the stable SiYuan API. It works with SiYuan 3.6.5 and later, including 3.8.1. Two AV behaviors changed for 3.8.1 and are already handled by the CLI:
+
+- `av set-cell` sends `itemID` (the `--item-id` flag); SiYuan 3.8.1 rejects the legacy `rowID` request field.
+- `av update-key` updates fields through `/api/transactions` (`updateAttrViewCol` / `setAttrViewColIcon`) instead of the never-registered `/api/av/updateAttributeViewKey` route.
+
+CLI fixes for the 3.8.1 API contract: `doc create` always sends an explicit `markdown` field (SiYuan 3.8.1 silently returns `data: null` without creating the doc when the key is absent), and `av add-detached-rows` sends `itemID` (the `--row-ids` values) plus an optional `--content` primary-key text per the official `addAttributeViewBlocks` contract.
 
 ## Installation
 

@@ -45,12 +45,17 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 
 ## High-Risk Gotchas
 
-- `template render` requires both `--id` and `--path`, and `--path` must be a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`. It is not an hpath like `/Notebook/Doc`.
+- `template render` requires both `--id` and `--path`, and `--path` must be a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`. It is not an hpath like `/Notebook/Doc`. On SiYuan >= 3.8.1 the path must also live inside `<data>/templates/` (symlinks are resolved and rejected if they escape); any other path fails with "Path [...] is not in templates directory".
 - `template render` and `template render-sprig` do not support CLI-side `--var` or `--vars`.
 - In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for generated multiline input files. Different processes may resolve them differently. Use a current-working-directory absolute path instead.
 - `file` is intentionally not arbitrary filesystem access. It only writes to managed `data/.sy-cli/{cache,exports,reports}` and staging under `/tmp/sy-cli/staging`.
 - `export resources` is document-centric: it resolves the root document and exports only referenced assets. A document with no asset refs returns a structured not-found style failure instead of an empty success.
-- `av set-cell` accepts plain text for text-like fields because the CLI wraps it into the API value object. For non-text fields, pass the correct `--value-type` and value shape.
+- `av set-cell` uses `--item-id` (the row/block id), not `--row-id`. SiYuan >= 3.8.1 rejects the legacy `rowID` request field, so any agent docs or scripts still passing `--row-id` must be migrated. The CLI still wraps plain text into the API value object for text-like fields; pass the correct `--value-type` and value shape for non-text fields.
+- `av update-key` updates a field through `/api/transactions` (`updateAttrViewCol` for name/type, `setAttrViewColIcon` for icon). When only one of `--name`/`--type` is given the CLI resolves the other from `av keys` first; if the key cannot be resolved the command fails with a structured error.
+- `block append`, `block prepend`, and `block insert` (with only `--parent-id`, no `--previous-id`/`--next-id`) require the target parent to be a container block (document root, list item, quote, etc.). SiYuan >= 3.8.1 rejects non-container parents as invalid nesting, where 3.6.x silently allowed them.
+- `block update` on SiYuan >= 3.8.1 always rejects updates that would produce invalid parent-child structures (the new optional `lockType` flag defaults to `false`). Updates that previously "worked" into invalid structures now fail.
+- `ref refresh` requires an admin token on SiYuan >= 3.8.1 (non-admin and read-only tokens are rejected); the CLI's normal admin configuration is unaffected.
+- `graph global` / `graph local` only persist their `--conf` when the token is admin and not read-only on SiYuan >= 3.8.1; non-admin runs still return the graph but the configuration is not saved.
 - `doc resolve-path` and `path doc-id` work with SiYuan document paths, not workspace filesystem `.sy` file paths.
 
 ## AV (Attribute View) rendering

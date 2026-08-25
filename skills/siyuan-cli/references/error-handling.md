@@ -68,7 +68,7 @@ Action:
 - repeated `VALIDATION_FILE_READ_FAILED` on generated multiline input files usually means the agent kept retrying the same unreachable temp path pattern. Stop retrying `/tmp` or `$TMPDIR` variants and move the file into the current working directory instead.
 - `export resources` failing on a document that has no asset refs is not a transport error. Check whether the source document actually contains asset links.
 - `file.get`, `file.list`, or `file.remove` failures on scope usually mean the agent used a non-managed scope. Allowed scopes are `cache`, `export`, and `report`.
-- `av set-cell` failures often come from a mismatched `key-id`, `row-id`, or wrong `--value-type` for the destination column.
+- `av set-cell` failures often come from a mismatched `key-id`, `item-id`, or wrong `--value-type` for the destination column.
 - `npm run dev -- ...` failures from outside the repo usually mean the agent used the repo-local fallback from the wrong working directory.
 
 ## When to stop and ask the user

@@ -25,7 +25,11 @@ export async function readStdin(): Promise<string> {
     // Safety: non-TTY stdin with no data (e.g. open pipe) should not hang forever.
     // The first data chunk arrives within ms when real data is piped.
     const safety = setTimeout(() => {
-      if (buffer.length === 0) finish();
+      if (buffer.length === 0) {
+        // An open pipe with no data (script/CI spawn) must not keep the process alive.
+        process.stdin.unref();
+        finish();
+      }
     }, 500);
   });
 }

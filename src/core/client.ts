@@ -162,7 +162,7 @@ export class SiyuanClient {
   async setAttributeViewBlockAttr(payload: {
     avID: string;
     keyID: string;
-    rowID: string;
+    itemID: string;
     value: unknown;
     valueType?: string;
   }): Promise<unknown> {
@@ -186,9 +186,39 @@ export class SiyuanClient {
     keyName?: string;
     keyType?: string;
     keyIcon?: string;
-    previousKeyID?: string;
   }): Promise<unknown> {
-    return this.postAllowingEmptyBody("/api/av/updateAttributeViewKey", payload);
+    const doOperations: Array<Record<string, unknown>> = [];
+
+    if (payload.keyName !== undefined || payload.keyType !== undefined) {
+      doOperations.push({
+        action: "updateAttrViewCol",
+        avID: payload.avID,
+        id: payload.keyID,
+        name: payload.keyName ?? "",
+        type: payload.keyType ?? ""
+      });
+    }
+
+    if (payload.keyIcon !== undefined) {
+      doOperations.push({
+        action: "setAttrViewColIcon",
+        avID: payload.avID,
+        id: payload.keyID,
+        data: payload.keyIcon
+      });
+    }
+
+    if (doOperations.length === 0) {
+      throw new SiyuanCliError(
+        "VALIDATION_MISSING_MUTATION",
+        "at least one mutation option must be provided"
+      );
+    }
+
+    return this.post("/api/transactions", {
+      reqId: Date.now(),
+      transactions: [{ doOperations, undoOperations: [] }]
+    });
   }
 
   async removeAttributeViewKey(payload: {
@@ -201,7 +231,12 @@ export class SiyuanClient {
 
   async addAttributeViewBlocks(payload: {
     avID: string;
-    srcs: Array<{ id: string; isDetached: boolean }>;
+    srcs: Array<{
+      id?: string;
+      itemID?: string;
+      isDetached: boolean;
+      content?: string;
+    }>;
   }): Promise<unknown> {
     return this.post("/api/av/addAttributeViewBlocks", payload);
   }
@@ -403,54 +438,6 @@ export class SiyuanClient {
     }
   }
 
-  async postAllowingEmptyBody<T>(endpoint: string, body: unknown): Promise<T> {
-    try {
-      const response = await this.http.post<SiyuanEnvelope<T> | string>(endpoint, body);
-      if (response.data === "") {
-        return null as T;
-      }
-
-      const envelope = response.data;
-      if (!isEnvelope(envelope)) {
-        throw new SiyuanCliError(
-          "API_INVALID_RESPONSE",
-          "SiYuan API returned an invalid response envelope",
-          { endpoint }
-        );
-      }
-
-      if (envelope.code !== 0) {
-        throw new SiyuanCliError("API_RESPONSE_ERROR", envelope.msg, {
-          endpoint,
-          response_code: envelope.code
-        });
-      }
-
-      return envelope.data;
-    } catch (error) {
-      if (error instanceof SiyuanCliError) {
-        throw error;
-      }
-
-      if (isAxiosError(error)) {
-        throw new SiyuanCliError(
-          "API_NETWORK_ERROR",
-          "Failed to reach SiYuan API",
-          {
-            endpoint,
-            status: error.response?.status ?? null,
-            axios_code: error.code ?? null
-          }
-        );
-      }
-
-      throw new SiyuanCliError(
-        "API_NETWORK_ERROR",
-        "Failed to reach SiYuan API",
-        { endpoint }
-      );
-    }
-  }
 }
 
 function isEnvelope<T>(value: unknown): value is SiyuanEnvelope<T> {

@@ -211,6 +211,50 @@ describe("workflow commands", () => {
     write.mockRestore();
   });
 
+  it("passes empty markdown when default doc create has no stdin input", async () => {
+    const previousToken = process.env.SIYUAN_TOKEN;
+    const previousBaseUrl = process.env.SIYUAN_BASE_URL;
+    process.env.SIYUAN_TOKEN = "test-token";
+    process.env.SIYUAN_BASE_URL = "http://127.0.0.1:6806";
+
+    const createDoc = vi
+      .spyOn(SiyuanClient.prototype, "createDoc")
+      .mockResolvedValue("doc-1");
+
+    const cli = createCli();
+    cli.exitOverride();
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "doc",
+      "create",
+      "--notebook",
+      "nb-1",
+      "--path",
+      "/Empty-Doc",
+      "--json"
+    ]);
+
+    expect(createDoc).toHaveBeenCalledWith({
+      notebook: "nb-1",
+      path: "/Empty-Doc",
+      markdown: ""
+    });
+
+    if (previousToken === undefined) {
+      delete process.env.SIYUAN_TOKEN;
+    } else {
+      process.env.SIYUAN_TOKEN = previousToken;
+    }
+
+    if (previousBaseUrl === undefined) {
+      delete process.env.SIYUAN_BASE_URL;
+    } else {
+      process.env.SIYUAN_BASE_URL = previousBaseUrl;
+    }
+  });
+
   it("runs workflow sql-report in json mode", async () => {
     const write = vi.fn(() => true);
     const query = vi.fn(async () => [{ id: "b1" }]);

@@ -33,7 +33,7 @@ export interface AvApi {
   setCell: (input: {
     avID: string;
     keyID: string;
-    rowID: string;
+    itemID: string;
     value: unknown;
     valueType?: string;
   }) => Promise<unknown>;
@@ -51,7 +51,6 @@ export interface AvApi {
     keyName?: string;
     keyType?: string;
     keyIcon?: string;
-    previousKeyID?: string;
   }) => Promise<unknown>;
   removeKey: (input: {
     avID: string;
@@ -60,7 +59,10 @@ export interface AvApi {
   }) => Promise<unknown>;
   addBlocks: (input: { avID: string; srcs: Array<{ id: string; isDetached: boolean }> }) => Promise<unknown>;
   removeBlocks: (input: { avID: string; srcIDs: string[] }) => Promise<unknown>;
-  addDetachedRows: (input: { avID: string; srcs: Array<{ id: string; isDetached: boolean }> }) => Promise<unknown>;
+  addDetachedRows: (input: {
+    avID: string;
+    srcs: Array<{ itemID: string; isDetached: boolean; content?: string }>;
+  }) => Promise<unknown>;
   setName: (avID: string, name: string) => Promise<unknown>;
 }
 
@@ -210,7 +212,7 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
     .command("set-cell")
     .requiredOption("--av-id <id>")
     .requiredOption("--key-id <id>")
-    .requiredOption("--row-id <id>")
+    .requiredOption("--item-id <id>")
     .requiredOption("--value <json-or-text>")
     .option("--value-type <type>")
     .option("--json")
@@ -218,7 +220,7 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
       async (options: {
         avId: string;
         keyId: string;
-        rowId: string;
+        itemId: string;
         value: string;
         valueType?: string;
         json?: boolean;
@@ -230,7 +232,7 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
             deps.avApi.setCell({
               avID: options.avId,
               keyID: options.keyId,
-              rowID: options.rowId,
+              itemID: options.itemId,
               value: parseValueInput(options.value, options.valueType),
               valueType: options.valueType
             }),
@@ -282,7 +284,6 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
     .option("--name <name>")
     .option("--type <type>")
     .option("--icon <icon>")
-    .option("--previous-key-id <id>")
     .option("--json")
     .action(
       async (options: {
@@ -291,26 +292,42 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
         name?: string;
         type?: string;
         icon?: string;
-        previousKeyId?: string;
         json?: boolean;
       }) => {
         await executeCommand({
           command: "av.update-key",
           json: options.json,
-          action: () => {
-            validateUpdateKeyMutation(
-              options.name,
-              options.type,
-              options.icon,
-              options.previousKeyId
-            );
+          action: async () => {
+            validateUpdateKeyMutation(options.name, options.type, options.icon);
+            let keyName = options.name;
+            let keyType = options.type;
+            if (keyName === undefined || keyType === undefined) {
+              if (keyName !== undefined || keyType !== undefined) {
+                const current = await resolveCurrentKey(
+                  deps.avApi,
+                  options.avId,
+                  options.keyId
+                );
+                if (
+                  !current ||
+                  current.name === undefined ||
+                  current.type === undefined
+                ) {
+                  throw new SiyuanCliError(
+                    "API_RESPONSE_ERROR",
+                    `unable to resolve current name/type for av key [${options.keyId}] in av [${options.avId}]`
+                  );
+                }
+                keyName = keyName ?? current.name;
+                keyType = keyType ?? current.type;
+              }
+            }
             return deps.avApi.updateKey({
               avID: options.avId,
               keyID: options.keyId,
-              keyName: options.name,
-              keyType: options.type,
-              keyIcon: options.icon,
-              previousKeyID: options.previousKeyId
+              keyName,
+              keyType,
+              keyIcon: options.icon
             });
           },
           write: deps.write
@@ -396,9 +413,15 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
     .command("add-detached-rows")
     .requiredOption("--av-id <id>")
     .requiredOption("--row-ids <ids>")
+    .option("--content <text>")
     .option("--json")
     .action(
-      async (options: { avId: string; rowIds: string; json?: boolean }) => {
+      async (options: {
+        avId: string;
+        rowIds: string;
+        content?: string;
+        json?: boolean;
+      }) => {
         await executeCommand({
           command: "av.add-detached-rows",
           json: options.json,
@@ -406,8 +429,9 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
             deps.avApi.addDetachedRows({
               avID: options.avId,
               srcs: options.rowIds.split(",").map((id: string) => ({
-                id: id.trim(),
-                isDetached: true
+                itemID: id.trim(),
+                isDetached: true,
+                content: options.content
               }))
             }),
           write: deps.write
@@ -606,14 +630,12 @@ function validateForceRequired(force: boolean | undefined): void {
 function validateUpdateKeyMutation(
   name: string | undefined,
   type: string | undefined,
-  icon: string | undefined,
-  previousKeyId: string | undefined
+  icon: string | undefined
 ): void {
   if (
     name !== undefined ||
     type !== undefined ||
-    icon !== undefined ||
-    previousKeyId !== undefined
+    icon !== undefined
   ) {
     return;
   }
@@ -622,6 +644,36 @@ function validateUpdateKeyMutation(
     "VALIDATION_MISSING_MUTATION",
     "at least one mutation option must be provided"
   );
+}
+
+async function resolveCurrentKey(
+  avApi: AvApi,
+  avId: string,
+  keyId: string
+): Promise<{ name: string; type: string } | undefined> {
+  const keys = await avApi.keys(avId);
+  if (!Array.isArray(keys)) {
+    return undefined;
+  }
+
+  const key = keys.find((item) => {
+    if (item && typeof item === "object" && "id" in item) {
+      return item.id === keyId;
+    }
+    return false;
+  });
+  if (!key || typeof key !== "object") {
+    return undefined;
+  }
+
+  const candidate = key as { name?: unknown; type?: unknown };
+  if (
+    typeof candidate.name !== "string" ||
+    typeof candidate.type !== "string"
+  ) {
+    return undefined;
+  }
+  return { name: candidate.name, type: candidate.type };
 }
 
 async function executeCommand(input: {

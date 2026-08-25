@@ -102,11 +102,13 @@ sy av remove-blocks --av-id <id> --src-ids <row_id1,row_id2>
 
 ### 添加非绑定行
 
-不引用任何文档块的空行：
+`--row-ids` 指定行的显式 item id(通过 API 的 `itemID` 字段下发),`--content` 可设置主键文本:
 
 ```bash
-sy av add-detached-rows --av-id <id> --row-ids <id1,id2>
+sy av add-detached-rows --av-id <id> --row-ids <row1> --content "第一行"
 ```
+
+### 重命名 AV
 
 ### 重命名 AV
 
@@ -124,7 +126,7 @@ sy av keys --id <id> --json
 sy av views --id <id> --json
 
 # 设置单元格值
-sy av set-cell --av-id <id> --key-id <key> --row-id <row> --value "text" --json
+sy av set-cell --av-id <id> --key-id <key> --item-id <row> --value "text" --json
 
 # 添加列
 sy av add-key --av-id <id> --key-id <new_key> --name "字段名" --type text --json

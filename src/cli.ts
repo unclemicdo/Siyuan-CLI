@@ -358,7 +358,8 @@ function createDefaultSqlApi(createClient: () => SiyuanClient): SqlApi {
 
 function createDefaultDocApi(createClient: () => SiyuanClient): DocApi {
   return {
-    create: async (input) => createClient().createDoc(input),
+    create: async (input) =>
+      createClient().createDoc({ ...input, markdown: input.markdown ?? "" }),
     exportMarkdown: async (id: string) => createClient().exportMarkdown(id),
     rename: async (id: string, title: string) => {
       await createClient().renameDoc(id, title);

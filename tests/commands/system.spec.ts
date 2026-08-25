@@ -437,7 +437,7 @@ describe("siyuan client", () => {
     await client.setAttributeViewBlockAttr({
       avID: "av-1",
       keyID: "key-1",
-      rowID: "row-1",
+      itemID: "row-1",
       value: { text: { content: "done" } }
     });
     await client.addAttributeViewKey({
@@ -451,9 +451,7 @@ describe("siyuan client", () => {
     await client.updateAttributeViewKey({
       avID: "av-1",
       keyID: "key-2",
-      keyName: "State",
-      keyIcon: "",
-      previousKeyID: ""
+      keyName: "State"
     });
     await client.removeAttributeViewKey({
       avID: "av-1",
@@ -490,7 +488,7 @@ describe("siyuan client", () => {
     expect(post).toHaveBeenNthCalledWith(4, "/api/av/setAttributeViewBlockAttr", {
       avID: "av-1",
       keyID: "key-1",
-      rowID: "row-1",
+      itemID: "row-1",
       value: { text: { content: "done" } }
     });
     expect(post).toHaveBeenNthCalledWith(5, "/api/av/addAttributeViewKey", {
@@ -501,12 +499,22 @@ describe("siyuan client", () => {
       keyIcon: "",
       previousKeyID: ""
     });
-    expect(post).toHaveBeenNthCalledWith(6, "/api/av/updateAttributeViewKey", {
-      avID: "av-1",
-      keyID: "key-2",
-      keyName: "State",
-      keyIcon: "",
-      previousKeyID: ""
+    expect(post).toHaveBeenNthCalledWith(6, "/api/transactions", {
+      reqId: expect.any(Number),
+      transactions: [
+        {
+          doOperations: [
+            {
+              action: "updateAttrViewCol",
+              avID: "av-1",
+              id: "key-2",
+              name: "State",
+              type: ""
+            }
+          ],
+          undoOperations: []
+        }
+      ]
     });
     expect(post).toHaveBeenNthCalledWith(7, "/api/av/removeAttributeViewKey", {
       avID: "av-1",
@@ -935,16 +943,80 @@ describe("system command", () => {
     expect(result.stdout).not.toContain('"code":"CONFIG_MISSING_TOKEN"');
   });
 
-  it("treats an empty-body av update response as success", async () => {
-    const post = vi.fn(async () => ({ data: "" }));
+  it("updates an av key through /api/transactions with updateAttrViewCol", async () => {
+    const post = vi.fn(async () => ({
+      data: { code: 0, msg: "", data: [] }
+    }));
+    const client = new SiyuanClient({ post } as never);
+
+    const result = await client.updateAttributeViewKey({
+      avID: "av-1",
+      keyID: "key-1",
+      keyName: "State",
+      keyType: "text"
+    });
+
+    expect(post).toHaveBeenCalledWith("/api/transactions", {
+      reqId: expect.any(Number),
+      transactions: [
+        {
+          doOperations: [
+            {
+              action: "updateAttrViewCol",
+              avID: "av-1",
+              id: "key-1",
+              name: "State",
+              type: "text"
+            }
+          ],
+          undoOperations: []
+        }
+      ]
+    });
+    expect(result).toEqual([]);
+  });
+
+  it("updates only the av key icon through setAttrViewColIcon when no name or type is given", async () => {
+    const post = vi.fn(async () => ({
+      data: { code: 0, msg: "", data: [] }
+    }));
+    const client = new SiyuanClient({ post } as never);
+
+    await client.updateAttributeViewKey({
+      avID: "av-1",
+      keyID: "key-1",
+      keyIcon: "iconTag"
+    });
+
+    expect(post).toHaveBeenCalledWith("/api/transactions", {
+      reqId: expect.any(Number),
+      transactions: [
+        {
+          doOperations: [
+            {
+              action: "setAttrViewColIcon",
+              avID: "av-1",
+              id: "key-1",
+              data: "iconTag"
+            }
+          ],
+          undoOperations: []
+        }
+      ]
+    });
+  });
+
+  it("rejects an av key update with no mutation options", async () => {
+    const post = vi.fn(async () => ({
+      data: { code: 0, msg: "", data: [] }
+    }));
     const client = new SiyuanClient({ post } as never);
 
     await expect(
-      client.updateAttributeViewKey({
-        avID: "av-1",
-        keyID: "key-1",
-        keyName: "State"
-      })
-    ).resolves.toBeNull();
+      client.updateAttributeViewKey({ avID: "av-1", keyID: "key-1" })
+    ).rejects.toMatchObject({
+      code: "VALIDATION_MISSING_MUTATION"
+    });
+    expect(post).not.toHaveBeenCalled();
   });
 });
