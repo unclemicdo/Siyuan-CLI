@@ -104,6 +104,28 @@ describe("sql query", () => {
     process.exitCode = previousExitCode;
   });
 
+  it("flushes pending SQL index updates through sqlApi.flush", async () => {
+    const write = vi.fn(() => true);
+    const flush = vi.fn(async () => null);
+    const cli = createCli({
+      sqlApi: { flush },
+      write
+    });
+    cli.exitOverride();
+
+    await cli.parseAsync(["node", "sy", "sql", "flush", "--json"]);
+
+    expect(flush).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
+    expect(payload).toEqual(
+      expect.objectContaining({
+        ok: true,
+        command: "sql.flush",
+        data: null
+      })
+    );
+  });
+
   it("explains accepted read-only SQL without calling sqlApi", async () => {
     const write = vi.fn(() => true);
     const query = vi.fn(async () => []);

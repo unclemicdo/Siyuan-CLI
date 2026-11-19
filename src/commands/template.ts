@@ -1,17 +1,18 @@
 import { Command } from "commander";
-import { z } from "zod";
 import { SiyuanCliError } from "../core/errors.js";
 import { formatFailure, formatSuccess } from "../core/output.js";
 import { cleanupInputFile } from "../utils/input-file-cleanup.js";
 import { resolveTextInput } from "../utils/text-input.js";
 
-const jsonObjectSchema = z.record(z.string(), z.unknown());
+export type TemplateRenderMode = "preview" | "editorInsert";
 
 export interface TemplateApi {
   render: (input: {
     id: string;
     path: string;
     preview?: boolean;
+    mode?: TemplateRenderMode;
+    httpConfirmToken?: string;
   }) => Promise<unknown>;
   renderSprig: (input: {
     template: string;
@@ -35,12 +36,16 @@ export function registerTemplateCommands(
     .requiredOption("--id <id>")
     .requiredOption("--path <path>")
     .option("--preview")
+    .option("--mode <mode>", "preview or editorInsert")
+    .option("--http-confirm-token <token>")
     .option("--json")
     .action(
       async (options: {
         id: string;
         path: string;
         preview?: boolean;
+        mode?: string;
+        httpConfirmToken?: string;
         json?: boolean;
       }) => {
         await executeCommand({
@@ -48,11 +53,15 @@ export function registerTemplateCommands(
           json: options.json,
           action: () => {
             validateWorkspaceAbsolutePath(options.path, "--path");
-            return deps.templateApi.render({
-              id: options.id,
-              path: options.path,
-              preview: options.preview
-            });
+            return deps.templateApi.render(
+              buildRenderPayload({
+                id: options.id,
+                path: options.path,
+                preview: options.preview,
+                mode: options.mode,
+                httpConfirmToken: options.httpConfirmToken
+              })
+            );
           },
           write: deps.write
         });
@@ -104,6 +113,75 @@ export function registerTemplateCommands(
         });
       }
     );
+}
+
+export function buildRenderPayload(input: {
+  id: string;
+  path: string;
+  preview?: boolean;
+  mode?: string;
+  httpConfirmToken?: string;
+}): {
+  id: string;
+  path: string;
+  preview?: boolean;
+  mode?: TemplateRenderMode;
+  httpConfirmToken?: string;
+} {
+  const mode = parseOptionalMode(input.mode);
+  if (input.preview && mode && mode !== "preview") {
+    throw new SiyuanCliError(
+      "VALIDATION_CONFLICTING_OPTIONS",
+      "--preview conflicts with --mode when mode is not preview"
+    );
+  }
+
+  const payload: {
+    id: string;
+    path: string;
+    preview?: boolean;
+    mode?: TemplateRenderMode;
+    httpConfirmToken?: string;
+  } = {
+    id: input.id,
+    path: input.path
+  };
+
+  if (mode) {
+    payload.mode = mode;
+  } else if (input.preview) {
+    // Legacy boolean remains supported by SiYuan when mode is omitted.
+    payload.preview = true;
+  }
+
+  if (input.httpConfirmToken !== undefined) {
+    const token = input.httpConfirmToken.trim();
+    if (!token) {
+      throw new SiyuanCliError(
+        "VALIDATION_INVALID_OPTION",
+        "--http-confirm-token must be a non-empty token"
+      );
+    }
+    payload.httpConfirmToken = token;
+  }
+
+  return payload;
+}
+
+function parseOptionalMode(raw: string | undefined): TemplateRenderMode | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+
+  if (raw === "preview" || raw === "editorInsert") {
+    return raw;
+  }
+
+  throw new SiyuanCliError(
+    "VALIDATION_INVALID_OPTION",
+    "--mode must be preview or editorInsert",
+    { option: "--mode", received: raw, allowed: ["preview", "editorInsert"] }
+  );
 }
 
 function validateWorkspaceAbsolutePath(path: string, optionName: string): void {

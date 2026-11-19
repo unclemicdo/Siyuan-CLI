@@ -37,21 +37,30 @@ Use this skill when the user wants work done through this repository's `sy` CLI 
 - Use `av ...` for database or Attribute View reads and schema/cell changes. Do not fall back to SQL writes.
   - `av add-blocks`, `av remove-blocks`, `av add-detached-rows`, `av set-name` are available for AV row and metadata mutations.
   - For full AV creation workflow (document + AV block + columns), read `references/av-rendering.md`.
-- Use `template render` only as the official SiYuan template API passthrough.
+- Use `template render` only as the official SiYuan template API passthrough. Prefer `--mode preview|editorInsert` for the current contract; `--preview` remains as legacy equivalent of `--mode preview`. Pass `--http-confirm-token` only with `--mode editorInsert` when reusing a preview approval.
 - Use `template render-sprig` only for raw sprig template rendering.
-- Use `file ...` only for managed `cache`, `export`, and `report` scopes plus staging under `/tmp/sy-cli/staging`.
+- After block/doc writes, call `sql flush --json` before any `sql query` that must observe those writes.
+- Use `file ...` only for managed `cache`, `export`, and `report` scopes plus staging under `$TMPDIR/sy-cli/staging`.
 - Use `asset upload` for file-to-asset ingestion.
 - Use `export resources --id <doc-or-block-id>` to export assets referenced by a document tree.
+- Use `av search --keyword` to discover databases globally. Use `av render --query` to filter rows inside one database by primary-key text.
+- Use `av filter-sort --id <av-id> --block-id <block-id>` for saved filter/sort rules; `--block-id` is required by the official API.
+- Use `ref backlinks` against `/api/ref/getBacklink2` (the legacy `/api/ref/getBacklink` route is gone). Prefer `--sort` / `--mention-sort` over the removed `--before-len`.
 
 ## High-Risk Gotchas
 
 - `template render` requires both `--id` and `--path`, and `--path` must be a workspace filesystem absolute path such as `/Users/name/SiYuan/.../doc.sy`. It is not an hpath like `/Notebook/Doc`. On SiYuan >= 3.8.1 the path must also live inside `<data>/templates/` (symlinks are resolved and rejected if they escape); any other path fails with "Path [...] is not in templates directory".
+- `template render --mode` accepts only `preview` or `editorInsert`. Do not combine `--preview` with a non-preview `--mode`. `--http-confirm-token` is optional and only meaningful for the editor-insert handoff.
 - `template render` and `template render-sprig` do not support CLI-side `--var` or `--vars`.
+- Block writes can return before the SQL index catches up. If the next step is `sql query`, run `sql flush` first and wait for success.
+- `av update-key` and `av set-name` still use `/api/transactions` because no public dedicated endpoints exist. Keep using them when they succeed on the target kernel; treat unexpected transaction failures as compatibility feedback, not as a cue to invent alternate write paths.
 - In sandboxed agent environments, avoid `/tmp` and `$TMPDIR` for generated multiline input files. Different processes may resolve them differently. Use a current-working-directory absolute path instead.
-- `file` is intentionally not arbitrary filesystem access. It only writes to managed `data/.sy-cli/{cache,exports,reports}` and staging under `/tmp/sy-cli/staging`.
+- `file` is intentionally not arbitrary filesystem access. It only writes to managed `~/.cache/sy-cli/{cache,exports,reports}` (or `$XDG_CACHE_HOME/sy-cli/...`) and staging under `$TMPDIR/sy-cli/staging`.
 - `export resources` is document-centric: it resolves the root document and exports only referenced assets. A document with no asset refs returns a structured not-found style failure instead of an empty success.
 - `av set-cell` uses `--item-id` (the row/block id), not `--row-id`. SiYuan >= 3.8.1 rejects the legacy `rowID` request field, so any agent docs or scripts still passing `--row-id` must be migrated. The CLI still wraps plain text into the API value object for text-like fields; pass the correct `--value-type` and value shape for non-text fields.
 - `av update-key` updates a field through `/api/transactions` (`updateAttrViewCol` for name/type, `setAttrViewColIcon` for icon). When only one of `--name`/`--type` is given the CLI resolves the other from `av keys` first; if the key cannot be resolved the command fails with a structured error.
+- `av search` maps to `/api/av/searchAttributeView` and searches database names, not row contents. Do not pass `--id`/`--query`; use `--keyword` (and optional `--excludes` / `--include-view-matches`).
+- `av primary-values` maps to `/api/av/getAttributeViewPrimaryKeyValues`. `av relation-keys` maps to `/api/av/searchAttributeViewRelationKey`.
 - `block append`, `block prepend`, and `block insert` (with only `--parent-id`, no `--previous-id`/`--next-id`) require the target parent to be a container block (document root, list item, quote, etc.). SiYuan >= 3.8.1 rejects non-container parents as invalid nesting, where 3.6.x silently allowed them.
 - `block update` on SiYuan >= 3.8.1 always rejects updates that would produce invalid parent-child structures (the new optional `lockType` flag defaults to `false`). Updates that previously "worked" into invalid structures now fail.
 - `ref refresh` requires an admin token on SiYuan >= 3.8.1 (non-admin and read-only tokens are rejected); the CLI's normal admin configuration is unaffected.

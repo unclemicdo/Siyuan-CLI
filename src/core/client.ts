@@ -146,6 +146,37 @@ export class SiyuanClient {
     return this.post("/api/av/getAttributeViewKeysByAvID", { avID });
   }
 
+  async getAttributeViewPrimaryKeyValues(payload: {
+    id: string;
+    keyword?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<unknown> {
+    return this.post("/api/av/getAttributeViewPrimaryKeyValues", payload);
+  }
+
+  async searchAttributeView(payload: {
+    keyword: string;
+    excludes?: string[];
+    includeViewMatches?: boolean;
+  }): Promise<unknown> {
+    return this.post("/api/av/searchAttributeView", payload);
+  }
+
+  async searchAttributeViewRelationKey(payload: {
+    avID: string;
+    keyword: string;
+  }): Promise<unknown> {
+    return this.post("/api/av/searchAttributeViewRelationKey", payload);
+  }
+
+  async getAttributeViewFilterSort(payload: {
+    id: string;
+    blockID: string;
+  }): Promise<unknown> {
+    return this.post("/api/av/getAttributeViewFilterSort", payload);
+  }
+
   async renderAttributeView(payload: {
     id: string;
     viewID?: string;
@@ -157,6 +188,25 @@ export class SiyuanClient {
     createIfNotExist?: boolean;
   }): Promise<unknown> {
     return this.post("/api/av/renderAttributeView", payload);
+  }
+
+  async getIDsByHPath(payload: {
+    notebook: string;
+    path: string;
+  }): Promise<unknown> {
+    return this.post("/api/filetree/getIDsByHPath", payload);
+  }
+
+  async resolveDocPath(payload: {
+    notebook: string;
+    start: { kind: "root" } | { kind: "document"; id: string };
+    segments: string[];
+  }): Promise<unknown> {
+    return this.post("/api/filetree/resolveDocPath", payload);
+  }
+
+  async flushTransaction(): Promise<unknown> {
+    return this.post("/api/sqlite/flushTransaction", {});
   }
 
   async setAttributeViewBlockAttr(payload: {
@@ -280,6 +330,8 @@ export class SiyuanClient {
     id: string;
     path: string;
     preview?: boolean;
+    mode?: "preview" | "editorInsert";
+    httpConfirmToken?: string;
   }): Promise<unknown> {
     return this.post("/api/template/render", payload);
   }
@@ -323,10 +375,27 @@ export class SiyuanClient {
     id: string;
     k: string;
     mk: string;
-    beforeLen: number;
+    sort?: string | number;
+    mSort?: string | number;
     containChildren?: boolean;
   }): Promise<unknown> {
-    return this.post("/api/ref/getBacklink", payload);
+    // SiYuan removed /api/ref/getBacklink; the public replacement is getBacklink2.
+    // Contracted fields sort/mSort are JSON strings (kernel atoi's them).
+    const body: Record<string, unknown> = {
+      id: payload.id,
+      k: payload.k,
+      mk: payload.mk
+    };
+    if (payload.sort !== undefined) {
+      body.sort = String(payload.sort);
+    }
+    if (payload.mSort !== undefined) {
+      body.mSort = String(payload.mSort);
+    }
+    if (payload.containChildren !== undefined) {
+      body.containChildren = payload.containChildren;
+    }
+    return this.post("/api/ref/getBacklink2", body);
   }
 
   async getBacklinkDoc(payload: {

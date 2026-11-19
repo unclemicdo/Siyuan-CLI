@@ -61,8 +61,6 @@ describe("av commands", () => {
       "50",
       "--group-paging",
       "{\"status\":{\"page\":3}}",
-      "--config",
-      "{\"dense\":true}",
       "--create-if-not-exist",
       "--json"
     ]);
@@ -74,6 +72,12 @@ describe("av commands", () => {
       "primary-values",
       "--id",
       "av-1",
+      "--keyword",
+      "row",
+      "--page",
+      "2",
+      "--page-size",
+      "16",
       "--json"
     ]);
     await cli.parseAsync([
@@ -81,16 +85,11 @@ describe("av commands", () => {
       "sy",
       "av",
       "search",
-      "--id",
-      "av-1",
-      "--query",
+      "--keyword",
       "agent",
-      "--page",
-      "4",
-      "--page-size",
-      "25",
-      "--group-paging",
-      "{\"owner\":{\"page\":2}}",
+      "--excludes",
+      "av-x,av-y",
+      "--include-view-matches",
       "--json"
     ]);
     await cli.parseAsync([
@@ -100,6 +99,8 @@ describe("av commands", () => {
       "relation-keys",
       "--id",
       "av-1",
+      "--keyword",
+      "owner",
       "--json"
     ]);
     await cli.parseAsync([
@@ -109,8 +110,8 @@ describe("av commands", () => {
       "filter-sort",
       "--id",
       "av-1",
-      "--view-id",
-      "view-1",
+      "--block-id",
+      "block-1",
       "--json"
     ]);
     await cli.parseAsync(["node", "sy", "av", "views", "--id", "av-1", "--json"]);
@@ -124,22 +125,27 @@ describe("av commands", () => {
       page: 2,
       pageSize: 50,
       groupPaging: { status: { page: 3 } },
-      config: { dense: true },
       createIfNotExist: true
     });
     expect(keys).toHaveBeenCalledWith("av-1");
-    expect(primaryValues).toHaveBeenCalledWith("av-1");
-    expect(search).toHaveBeenCalledWith({
+    expect(primaryValues).toHaveBeenCalledWith({
       id: "av-1",
-      query: "agent",
-      page: 4,
-      pageSize: 25,
-      groupPaging: { owner: { page: 2 } }
+      keyword: "row",
+      page: 2,
+      pageSize: 16
     });
-    expect(relationKeys).toHaveBeenCalledWith("av-1");
+    expect(search).toHaveBeenCalledWith({
+      keyword: "agent",
+      excludes: ["av-x", "av-y"],
+      includeViewMatches: true
+    });
+    expect(relationKeys).toHaveBeenCalledWith({
+      avID: "av-1",
+      keyword: "owner"
+    });
     expect(filterSort).toHaveBeenCalledWith({
       id: "av-1",
-      viewID: "view-1"
+      blockID: "block-1"
     });
     expect(views).toHaveBeenCalledWith("av-1");
   });
@@ -376,6 +382,8 @@ describe("av commands", () => {
       "filter-sort",
       "--id",
       "av-1",
+      "--block-id",
+      "block-1",
       "--json"
     ]);
 
@@ -387,12 +395,11 @@ describe("av commands", () => {
       page: undefined,
       pageSize: undefined,
       groupPaging: undefined,
-      config: undefined,
       createIfNotExist: undefined
     });
     expect(filterSort).toHaveBeenCalledWith({
       id: "av-1",
-      viewID: undefined
+      blockID: "block-1"
     });
   });
 
@@ -442,15 +449,15 @@ describe("av commands", () => {
     const write = vi.fn(() => true);
     const previousExitCode = process.exitCode;
     process.exitCode = undefined;
-    const search = vi.fn(async () => ({}));
+    const primaryValues = vi.fn(async () => ({}));
 
     const { cli } = createAvCli(
       {
         get: async () => ({}),
         render: async () => ({}),
         keys: async () => ({}),
-        primaryValues: async () => ({}),
-        search,
+        primaryValues,
+        search: async () => ({}),
         relationKeys: async () => ({}),
         filterSort: async () => ({}),
         views: async () => ({})
@@ -462,20 +469,18 @@ describe("av commands", () => {
       "node",
       "sy",
       "av",
-      "search",
+      "primary-values",
       "--id",
       "av-1",
-      "--query",
-      "agent",
       "--page",
       "NaN",
       "--json"
     ]);
 
-    expect(search).not.toHaveBeenCalled();
+    expect(primaryValues).not.toHaveBeenCalled();
     const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
     expect(payload.ok).toBe(false);
-    expect(payload.command).toBe("av.search");
+    expect(payload.command).toBe("av.primary-values");
     expect(payload.error.code).toBe("VALIDATION_INVALID_NUMBER");
     expect(process.exitCode).toBe(1);
 

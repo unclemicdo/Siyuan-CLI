@@ -135,6 +135,15 @@ describe("workflow commands", () => {
     process.env.SIYUAN_TOKEN = "test-token";
     process.env.SIYUAN_BASE_URL = "http://127.0.0.1:6806";
 
+    const listNotebooks = vi
+      .spyOn(SiyuanClient.prototype, "listNotebooks")
+      .mockResolvedValue({ notebooks: [] });
+    const getIDsByHPath = vi
+      .spyOn(SiyuanClient.prototype, "getIDsByHPath")
+      .mockResolvedValue([]);
+    const resolveDocPath = vi
+      .spyOn(SiyuanClient.prototype, "resolveDocPath")
+      .mockResolvedValue({ status: "missing" });
     const querySql = vi
       .spyOn(SiyuanClient.prototype, "querySql")
       .mockResolvedValue([]);
@@ -171,6 +180,9 @@ describe("workflow commands", () => {
       rmSync(appendDir, { recursive: true, force: true });
     }
 
+    expect(listNotebooks).toHaveBeenCalledTimes(1);
+    expect(getIDsByHPath).not.toHaveBeenCalled();
+    expect(resolveDocPath).not.toHaveBeenCalled();
     expect(querySql).toHaveBeenCalledTimes(1);
     expect(createDoc).toHaveBeenCalledWith({
       notebook: "nb-1",

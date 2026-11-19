@@ -108,7 +108,7 @@ export interface CliDeps
 export interface CliDepsInput {
   systemApi?: SystemApi;
   notebookApi?: Partial<NotebookApi>;
-  sqlApi?: SqlApi;
+  sqlApi?: Partial<SqlApi>;
   docApi?: Partial<DocApi>;
   blockApi?: Partial<BlockApi>;
   attrApi?: Partial<AttrApi>;
@@ -217,7 +217,10 @@ function createDeps(
   const notebookApi = input.notebookApi
     ? bindNotebookApi(input.notebookApi, defaultNotebookApi)
     : defaultNotebookApi;
-  const sqlApi = input.sqlApi ? bindSqlApi(input.sqlApi) : createDefaultSqlApi(createClient);
+  const defaultSqlApi = createDefaultSqlApi(createClient);
+  const sqlApi = input.sqlApi
+    ? bindSqlApi(input.sqlApi, defaultSqlApi)
+    : defaultSqlApi;
   const docApi = input.docApi ? bindDocApi(input.docApi, defaultDocApi) : defaultDocApi;
   const blockApi = input.blockApi
     ? bindBlockApi(input.blockApi, defaultBlockApi)
@@ -352,7 +355,8 @@ function createDefaultNotebookApi(createClient: () => SiyuanClient): NotebookApi
 
 function createDefaultSqlApi(createClient: () => SiyuanClient): SqlApi {
   return {
-    query: async (stmt: string) => createClient().querySql(stmt)
+    query: async (stmt: string) => createClient().querySql(stmt),
+    flush: async () => createClient().flushTransaction()
   };
 }
 
@@ -416,21 +420,12 @@ function createDefaultAvApi(createClient: () => SiyuanClient): AvApi {
     get: async (id: string) => createClient().getAttributeView(id),
     render: async (input) => createClient().renderAttributeView(input),
     keys: async (id: string) => createClient().getAttributeViewKeysByAvID(id),
-    primaryValues: async (id: string) => createClient().getAttributeView(id),
-    search: async (input) =>
-      createClient().renderAttributeView({
-        id: input.id,
-        query: input.query,
-        page: input.page,
-        pageSize: input.pageSize,
-        groupPaging: input.groupPaging
-      }),
-    relationKeys: async (id: string) => createClient().getAttributeView(id),
-    filterSort: async (input) =>
-      createClient().renderAttributeView({
-        id: input.id,
-        viewID: input.viewID
-      }),
+    primaryValues: async (input) =>
+      createClient().getAttributeViewPrimaryKeyValues(input),
+    search: async (input) => createClient().searchAttributeView(input),
+    relationKeys: async (input) =>
+      createClient().searchAttributeViewRelationKey(input),
+    filterSort: async (input) => createClient().getAttributeViewFilterSort(input),
     views: async (id: string) => {
       const value = await createClient().getAttributeView(id);
       const av = extractObjectField(value, "av") ?? value;
@@ -675,9 +670,10 @@ function bindNotebookApi(
   };
 }
 
-function bindSqlApi(sqlApi: SqlApi): SqlApi {
+function bindSqlApi(sqlApi: Partial<SqlApi>, fallback: SqlApi): SqlApi {
   return {
-    query: sqlApi.query.bind(sqlApi)
+    query: sqlApi.query?.bind(sqlApi) ?? fallback.query,
+    flush: sqlApi.flush?.bind(sqlApi) ?? fallback.flush
   };
 }
 
@@ -824,12 +820,41 @@ async function resolvePathByHPath(
   createClient: () => SiyuanClient,
   path: string
 ): Promise<{ id: string } | null> {
+  const client = createClient();
+  const notebooks = await listNotebookRecords(client);
+  const pathInfo = splitNotebookQualifiedPath(path, notebooks);
+
+  // Prefer the public filetree APIs over SQL for path→id resolution.
+  if (pathInfo.notebookId) {
+    const byOfficial = await resolveViaOfficialPathApis(
+      client,
+      pathInfo.notebookId,
+      pathInfo.hpath,
+      pathInfo.segments
+    );
+    if (byOfficial) {
+      return byOfficial;
+    }
+  } else {
+    for (const notebook of notebooks) {
+      const byOfficial = await resolveViaOfficialPathApis(
+        client,
+        notebook.id,
+        pathInfo.hpath,
+        pathInfo.segments
+      );
+      if (byOfficial) {
+        return byOfficial;
+      }
+    }
+  }
+
   for (const candidate of candidateHPaths(path)) {
     const stmt =
       "SELECT id FROM blocks " +
       `WHERE type = 'd' AND hpath = ${quoteSqlString(candidate)} ` +
       "ORDER BY updated DESC LIMIT 1";
-    const rows = await createClient().querySql(stmt);
+    const rows = await client.querySql(stmt);
 
     if (!Array.isArray(rows)) {
       continue;
@@ -849,26 +874,112 @@ async function resolvePathByHPath(
   return null;
 }
 
-function candidateHPaths(path: string): string[] {
-  const candidates = [path];
-  const stripped = stripNotebookPrefix(path);
-  if (stripped && stripped !== path) {
-    candidates.push(stripped);
+async function resolveViaOfficialPathApis(
+  client: SiyuanClient,
+  notebookId: string,
+  hpath: string,
+  segments: string[]
+): Promise<{ id: string } | null> {
+  try {
+    const ids = await client.getIDsByHPath({
+      notebook: notebookId,
+      path: hpath
+    });
+    if (Array.isArray(ids) && typeof ids[0] === "string" && ids[0]) {
+      return { id: ids[0] };
+    }
+  } catch {
+    // Fall through to resolveDocPath / SQL.
   }
-  return candidates;
+
+  if (segments.length === 0) {
+    return null;
+  }
+
+  try {
+    const resolved = await client.resolveDocPath({
+      notebook: notebookId,
+      start: { kind: "root" },
+      segments
+    });
+    if (
+      resolved &&
+      typeof resolved === "object" &&
+      "status" in resolved &&
+      resolved.status === "resolved" &&
+      "resolved" in resolved &&
+      resolved.resolved &&
+      typeof resolved.resolved === "object" &&
+      "id" in resolved.resolved &&
+      typeof resolved.resolved.id === "string"
+    ) {
+      return { id: resolved.resolved.id };
+    }
+  } catch {
+    // Fall through to SQL.
+  }
+
+  return null;
 }
 
-function stripNotebookPrefix(path: string): string | null {
-  if (!path.startsWith("/")) {
-    return null;
+async function listNotebookRecords(
+  client: SiyuanClient
+): Promise<Array<{ id: string; name: string }>> {
+  const payload = await client.listNotebooks();
+  const notebooks = extractArrayField(payload, "notebooks");
+  if (!notebooks) {
+    return [];
   }
 
-  const segments = path.split("/").filter(Boolean);
-  if (segments.length < 3) {
-    return null;
+  return notebooks.flatMap((item) => {
+    if (!item || typeof item !== "object") {
+      return [];
+    }
+    const record = item as { id?: unknown; name?: unknown };
+    if (typeof record.id !== "string" || typeof record.name !== "string") {
+      return [];
+    }
+    return [{ id: record.id, name: record.name }];
+  });
+}
+
+function splitNotebookQualifiedPath(
+  path: string,
+  notebooks: Array<{ id: string; name: string }>
+): { notebookId?: string; hpath: string; segments: string[] } {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const segments = normalized.split("/").filter(Boolean);
+  if (segments.length === 0) {
+    return { hpath: "/", segments: [] };
   }
 
-  return `/${segments.slice(1).join("/")}`;
+  const matchedNotebook = notebooks.find(
+    (notebook) => notebook.name === segments[0]
+  );
+  if (matchedNotebook && segments.length >= 2) {
+    const rest = segments.slice(1);
+    return {
+      notebookId: matchedNotebook.id,
+      hpath: `/${rest.join("/")}`,
+      segments: rest
+    };
+  }
+
+  return {
+    hpath: `/${segments.join("/")}`,
+    segments
+  };
+}
+
+function candidateHPaths(path: string): string[] {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const candidates = [normalized];
+  const segments = normalized.split("/").filter(Boolean);
+  // Only strip a leading notebook-name segment when the remainder still has depth.
+  if (segments.length >= 3) {
+    candidates.push(`/${segments.slice(1).join("/")}`);
+  }
+  return [...new Set(candidates)];
 }
 
 function quoteSqlString(value: string): string {

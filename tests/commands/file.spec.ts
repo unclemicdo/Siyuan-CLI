@@ -5,6 +5,11 @@ import { join } from "node:path";
 import { Command } from "commander";
 import { registerFileCommands, type FileApi } from "../../src/commands/file.js";
 import { SiyuanCliError } from "../../src/core/errors.js";
+import {
+  getManagedRoot,
+  resolveManagedPath,
+  resolveTempPath
+} from "../../src/services/managed-paths.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -101,22 +106,22 @@ describe("file commands", () => {
     }
 
     expect(put).toHaveBeenNthCalledWith(1, {
-      path: "data/.sy-cli/cache/feed.json",
+      path: resolveManagedPath("cache", "feed.json"),
       content: "{\"ok\":true}",
       overwrite: false
     });
     expect(put).toHaveBeenNthCalledWith(2, {
-      path: "data/.sy-cli/exports/export.md",
+      path: resolveManagedPath("export", "export.md"),
       content: "# Export",
       overwrite: false
     });
     expect(put).toHaveBeenNthCalledWith(3, {
-      path: "data/.sy-cli/reports/daily.txt",
+      path: resolveManagedPath("report", "daily.txt"),
       content: "Summary",
       overwrite: false
     });
     expect(put).toHaveBeenNthCalledWith(4, {
-      path: "/tmp/sy-cli/staging/draft.md",
+      path: resolveTempPath("staging", "draft.md"),
       content: "Staged",
       overwrite: false
     });
@@ -157,7 +162,7 @@ describe("file commands", () => {
       ]);
 
       expect(put).toHaveBeenCalledWith({
-        path: "data/.sy-cli/reports/daily.txt",
+        path: resolveManagedPath("report", "daily.txt"),
         content: "Daily report\nLine 2\n",
         overwrite: false
       });
@@ -225,10 +230,14 @@ describe("file commands", () => {
       "--json"
     ]);
 
-    expect(get).toHaveBeenCalledWith("data/.sy-cli/cache/draft.md");
-    expect(list).toHaveBeenCalledWith("data/.sy-cli/cache");
+    const cacheDraft = resolveManagedPath("cache", "draft.md");
+    const cacheDir = join(getManagedRoot(), "cache");
+    const reportDaily = resolveManagedPath("report", "daily.txt");
+
+    expect(get).toHaveBeenCalledWith(cacheDraft);
+    expect(list).toHaveBeenCalledWith(cacheDir);
     expect(remove).toHaveBeenCalledWith({
-      path: "data/.sy-cli/reports/daily.txt",
+      path: reportDaily,
       force: true
     });
 
@@ -238,7 +247,7 @@ describe("file commands", () => {
         ok: true,
         command: "file.get",
         data: {
-          path: "data/.sy-cli/cache/draft.md",
+          path: cacheDraft,
           content: "cached text"
         }
       })
@@ -248,8 +257,8 @@ describe("file commands", () => {
         ok: true,
         command: "file.list",
         data: [
-          { name: "data/.sy-cli/cache-a.txt", size: 10 },
-          { name: "data/.sy-cli/cache-b.txt", size: 20 }
+          { name: `${cacheDir}-a.txt`, size: 10 },
+          { name: `${cacheDir}-b.txt`, size: 20 }
         ]
       })
     );
@@ -259,7 +268,7 @@ describe("file commands", () => {
         command: "file.remove",
         data: {
           removed: true,
-          path: "data/.sy-cli/reports/daily.txt",
+          path: reportDaily,
           force: true
         }
       })
@@ -274,7 +283,7 @@ describe("file commands", () => {
       {
         put: async () => {
           throw new SiyuanCliError("FILE_EXISTS", "Managed file already exists", {
-            path: "data/.sy-cli/cache/feed.json"
+            path: resolveManagedPath("cache", "feed.json")
           });
         },
         get: async () => ({}),
@@ -312,7 +321,7 @@ describe("file commands", () => {
           code: "FILE_EXISTS",
           message: "Managed file already exists",
           details: {
-            path: "data/.sy-cli/cache/feed.json"
+            path: resolveManagedPath("cache", "feed.json")
           }
         }
       })

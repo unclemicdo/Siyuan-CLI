@@ -99,12 +99,16 @@ sy repl
 
 ### SiYuan 版本兼容性
 
-CLI 面向稳定的 SiYuan API 构建，支持 SiYuan 3.6.5 及之后版本（含 3.8.1）。3.8.1 中两项 AV 行为发生变化，CLI 已适配：
+CLI 面向稳定的 SiYuan API 构建，支持 SiYuan 3.6.5 及之后版本（含 3.8.x）。已知契约适配：
 
-- `av set-cell` 发送 `itemID`（`--item-id` 参数）；SiYuan 3.8.1 会拒绝旧的 `rowID` 请求字段。
-- `av update-key` 通过 `/api/transactions`（`updateAttrViewCol` / `setAttrViewColIcon`）更新字段，不再调用从未注册过的 `/api/av/updateAttributeViewKey` 路由。
-
-针对 3.8.1 API 契约的 CLI 修复：`doc create` 始终发送显式 `markdown` 字段（缺失该键时 SiYuan 3.8.1 返回 `data: null` 且不创建文档）；`av add-detached-rows` 按官方 `addAttributeViewBlocks` 契约发送 `itemID`（`--row-ids` 值）及可选 `--content` 主键文本。
+- `av set-cell` 发送 `itemID`（`--item-id`）；SiYuan 3.8.1+ 会拒绝旧的 `rowID`。
+- `av update-key` 通过 `/api/transactions`（`updateAttrViewCol` / `setAttrViewColIcon`）更新字段。
+- `ref backlinks` 调用 `/api/ref/getBacklink2`（旧 `/api/ref/getBacklink` 已移除）。
+- `av primary-values` / `av search` / `av relation-keys` / `av filter-sort` 对齐对应公开 AV 端点。
+- `doc create` 始终发送显式 `markdown`；`av add-detached-rows` 发送 `itemID` 及可选 `--content`。
+- 托管 `file` 产物写入 `~/.cache/sy-cli/...`（或 `$XDG_CACHE_HOME/sy-cli/...`），不再使用依赖 CWD 的 `data/.sy-cli/...`。
+- `template render` 支持官方 `--mode preview|editorInsert` 与 `--http-confirm-token`；旧 `--preview` 仍可用。
+- `sql flush` 对应 `/api/sqlite/flushTransaction`，用于写后让 `sql query` 能看到最新数据。
 
 ## 安装
 

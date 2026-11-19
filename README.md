@@ -93,12 +93,17 @@ sy repl
 
 ### SiYuan version compatibility
 
-The CLI targets the stable SiYuan API. It works with SiYuan 3.6.5 and later, including 3.8.1. Two AV behaviors changed for 3.8.1 and are already handled by the CLI:
+The CLI targets the stable SiYuan API. It works with SiYuan 3.6.5 and later, including 3.8.x. Known contract adaptations:
 
-- `av set-cell` sends `itemID` (the `--item-id` flag); SiYuan 3.8.1 rejects the legacy `rowID` request field.
+- `av set-cell` sends `itemID` (the `--item-id` flag); SiYuan 3.8.1+ rejects the legacy `rowID` request field.
 - `av update-key` updates fields through `/api/transactions` (`updateAttrViewCol` / `setAttrViewColIcon`) instead of the never-registered `/api/av/updateAttributeViewKey` route.
-
-CLI fixes for the 3.8.1 API contract: `doc create` always sends an explicit `markdown` field (SiYuan 3.8.1 silently returns `data: null` without creating the doc when the key is absent), and `av add-detached-rows` sends `itemID` (the `--row-ids` values) plus an optional `--content` primary-key text per the official `addAttributeViewBlocks` contract.
+- `ref backlinks` calls `/api/ref/getBacklink2` because `/api/ref/getBacklink` was removed.
+- `av primary-values`, `av search`, `av relation-keys`, and `av filter-sort` map to the matching public AV endpoints rather than reuse `getAttributeView` / `renderAttributeView`.
+- `doc create` always sends an explicit `markdown` field; `av add-detached-rows` sends `itemID` plus optional `--content`.
+- Managed `file` artifacts use `~/.cache/sy-cli/...` (or `$XDG_CACHE_HOME/sy-cli/...`) instead of CWD-relative `data/.sy-cli/...`.
+- `template render` supports official `--mode preview|editorInsert` and `--http-confirm-token`; legacy `--preview` remains.
+- `sql flush` maps to `/api/sqlite/flushTransaction` so agents can make recent writes visible to `sql query`.
+- `ref backlinks --sort/--mention-sort` send string integers, matching the `getBacklink2` contract.
 
 ## Installation
 

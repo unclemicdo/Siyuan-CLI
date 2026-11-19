@@ -121,13 +121,14 @@ Inspect backlink and mention state for one block.
 - `--id <block-id>`: target block id
 - `--keyword <text>`: filter backlink text
 - `--mention-keyword <text>`: filter mention text
-- `--before-len <count>`: snippet context length
+- `--sort <mode>`: optional backlink sort mode for `/api/ref/getBacklink2` (integer string, e.g. `0`)
+- `--mention-sort <mode>`: optional backmention sort mode (integer string)
 - `--contain-children`: include child blocks
 
 ### Example
 
 ```bash
-sy ref backlinks --id block-1 --keyword "PDCA" --mention-keyword "复盘" --before-len 24 --json
+sy ref backlinks --id block-1 --keyword "PDCA" --mention-keyword "复盘" --sort 0 --json
 ```
 
 ## Query document backlinks

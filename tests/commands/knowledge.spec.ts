@@ -114,7 +114,8 @@ describe("ref commands", () => {
       id: string;
       k: string;
       mk: string;
-      beforeLen: number;
+      sort?: string;
+      mSort?: string;
       containChildren?: boolean;
     }) => ({ input }));
     const docBacklinks = vi.fn(async (input: {
@@ -169,8 +170,10 @@ describe("ref commands", () => {
       "协作",
       "--mention-keyword",
       "agent",
-      "--before-len",
-      "24",
+      "--sort",
+      "0",
+      "--mention-sort",
+      "1",
       "--contain-children",
       "--json"
     ]);
@@ -222,7 +225,8 @@ describe("ref commands", () => {
       id: "block-1",
       k: "协作",
       mk: "agent",
-      beforeLen: 24,
+      sort: "0",
+      mSort: "1",
       containChildren: true
     });
     expect(docBacklinks).toHaveBeenCalledWith({
@@ -356,7 +360,7 @@ describe("siyuan client knowledge operations", () => {
       id: "block-1",
       k: "",
       mk: "",
-      beforeLen: 12
+      containChildren: true
     });
     await client.getGraph({
       k: "AI",
@@ -372,11 +376,11 @@ describe("siyuan client knowledge operations", () => {
       app: "sy-cli",
       ignoreMaxListHint: true
     });
-    expect(post).toHaveBeenNthCalledWith(3, "/api/ref/getBacklink", {
+    expect(post).toHaveBeenNthCalledWith(3, "/api/ref/getBacklink2", {
       id: "block-1",
       k: "",
       mk: "",
-      beforeLen: 12
+      containChildren: true
     });
     expect(post).toHaveBeenNthCalledWith(4, "/api/graph/getGraph", {
       k: "AI",

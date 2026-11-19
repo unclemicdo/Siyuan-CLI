@@ -5,6 +5,7 @@ import { assertReadOnlySql } from "../services/sql-safety.js";
 
 export interface SqlApi {
   query: (stmt: string) => Promise<unknown>;
+  flush: () => Promise<unknown>;
 }
 
 export interface SqlCommandDeps {
@@ -20,32 +21,30 @@ export function registerSqlCommands(program: Command, deps: SqlCommandDeps): voi
     .requiredOption("--stmt <sql>")
     .option("--json")
     .action(async (options: { stmt: string; json?: boolean }) => {
-      try {
-        const stmt = assertReadOnlySql(options.stmt);
-        const started = Date.now();
-        const data = await deps.sqlApi.query(stmt);
-        const payload = formatSuccess("sql.query", data, Date.now() - started);
-        const output = options.json
-          ? JSON.stringify(payload)
-          : JSON.stringify(payload.data);
-        deps.write(`${output}\n`);
-      } catch (error) {
-        if (options.json) {
-          const cliError =
-            error instanceof SiyuanCliError
-              ? error
-              : new SiyuanCliError(
-                  "INTERNAL_ERROR",
-                  error instanceof Error ? error.message : "Unexpected error"
-                );
-          const payload = formatFailure("sql.query", cliError);
-          process.exitCode = 1;
-          deps.write(`${JSON.stringify(payload)}\n`);
-          return;
-        }
+      await executeCommand({
+        command: "sql.query",
+        json: options.json,
+        action: async () => {
+          const stmt = assertReadOnlySql(options.stmt);
+          return deps.sqlApi.query(stmt);
+        },
+        write: deps.write
+      });
+    });
 
-        throw error;
-      }
+  sql
+    .command("flush")
+    .description(
+      "Flush pending block-tree writes into the SQL index before subsequent sql query"
+    )
+    .option("--json")
+    .action(async (options: { json?: boolean }) => {
+      await executeCommand({
+        command: "sql.flush",
+        json: options.json,
+        action: () => deps.sqlApi.flush(),
+        write: deps.write
+      });
     });
 
   sql
@@ -53,37 +52,55 @@ export function registerSqlCommands(program: Command, deps: SqlCommandDeps): voi
     .requiredOption("--stmt <sql>")
     .option("--json")
     .action(async (options: { stmt: string; json?: boolean }) => {
-      try {
-        const normalizedStmt = assertReadOnlySql(options.stmt);
-        const payload = formatSuccess(
-          "sql.explain-safety",
-          {
+      await executeCommand({
+        command: "sql.explain-safety",
+        json: options.json,
+        action: async () => {
+          const normalizedStmt = assertReadOnlySql(options.stmt);
+          return {
             accepted: true,
             readOnly: true,
             normalizedStmt
-          },
-          0
-        );
-        const output = options.json
-          ? JSON.stringify(payload)
-          : JSON.stringify(payload.data);
-        deps.write(`${output}\n`);
-      } catch (error) {
-        if (options.json) {
-          const cliError =
-            error instanceof SiyuanCliError
-              ? error
-              : new SiyuanCliError(
-                  "INTERNAL_ERROR",
-                  error instanceof Error ? error.message : "Unexpected error"
-                );
-          const payload = formatFailure("sql.explain-safety", cliError);
-          process.exitCode = 1;
-          deps.write(`${JSON.stringify(payload)}\n`);
-          return;
-        }
-
-        throw error;
-      }
+          };
+        },
+        write: deps.write,
+        durationMs: 0
+      });
     });
+}
+
+async function executeCommand(input: {
+  command: string;
+  json?: boolean;
+  action: () => Promise<unknown>;
+  write: (value: string) => boolean;
+  durationMs?: number;
+}): Promise<void> {
+  try {
+    const started = Date.now();
+    const data = await input.action();
+    const duration =
+      input.durationMs !== undefined ? input.durationMs : Date.now() - started;
+    const payload = formatSuccess(input.command, data, duration);
+    const output = input.json
+      ? JSON.stringify(payload)
+      : JSON.stringify(payload.data);
+    input.write(`${output}\n`);
+  } catch (error) {
+    if (input.json) {
+      const cliError =
+        error instanceof SiyuanCliError
+          ? error
+          : new SiyuanCliError(
+              "INTERNAL_ERROR",
+              error instanceof Error ? error.message : "Unexpected error"
+            );
+      const payload = formatFailure(input.command, cliError);
+      process.exitCode = 1;
+      input.write(`${JSON.stringify(payload)}\n`);
+      return;
+    }
+
+    throw error;
+  }
 }

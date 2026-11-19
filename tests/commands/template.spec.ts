@@ -64,6 +64,71 @@ describe("template commands", () => {
     );
   });
 
+  it("passes official mode and httpConfirmToken for template render", async () => {
+    const write = vi.fn(() => true);
+    const render = vi.fn(async (input) => ({ rendered: input }));
+    const { cli } = createTemplateCli(
+      { render, renderSprig: async () => ({}) },
+      write
+    );
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "template",
+      "render",
+      "--id",
+      "doc-1",
+      "--path",
+      "/data/templates/daily.md",
+      "--mode",
+      "editorInsert",
+      "--http-confirm-token",
+      "token-1",
+      "--json"
+    ]);
+
+    expect(render).toHaveBeenCalledWith({
+      id: "doc-1",
+      path: "/data/templates/daily.md",
+      mode: "editorInsert",
+      httpConfirmToken: "token-1"
+    });
+  });
+
+  it("rejects conflicting --preview with non-preview --mode", async () => {
+    const write = vi.fn(() => true);
+    const previousExitCode = process.exitCode;
+    process.exitCode = undefined;
+    const render = vi.fn(async () => ({}));
+    const { cli } = createTemplateCli(
+      { render, renderSprig: async () => ({}) },
+      write
+    );
+
+    await cli.parseAsync([
+      "node",
+      "sy",
+      "template",
+      "render",
+      "--id",
+      "doc-1",
+      "--path",
+      "/data/templates/daily.md",
+      "--preview",
+      "--mode",
+      "editorInsert",
+      "--json"
+    ]);
+
+    expect(render).not.toHaveBeenCalled();
+    const payload = JSON.parse(String(write.mock.calls[0]?.[0] ?? ""));
+    expect(payload.ok).toBe(false);
+    expect(payload.error.code).toBe("VALIDATION_CONFLICTING_OPTIONS");
+    expect(process.exitCode).toBe(1);
+    process.exitCode = previousExitCode;
+  });
+
   it("renders sprig templates from files and cleans up input files when requested", async () => {
     const tempDir = mkdtempSync(join(tmpdir(), "siyuan-cli-template-"));
     const templatePath = join(tempDir, "daily.tmpl");

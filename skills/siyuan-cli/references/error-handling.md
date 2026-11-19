@@ -64,11 +64,16 @@ Action:
 ## Command-specific traps
 
 - `template render` failing with a message like "must be an absolute workspace path" means the agent passed an hpath or relative path. Retry with a real filesystem absolute `.sy` path inside the workspace.
+- `template render` rejecting `--mode` means the value was not `preview` or `editorInsert`, or `--preview` conflicted with a non-preview mode.
 - `template render-sprig` failing on `--var` or `--vars` is expected. Remove those flags instead of retrying.
+- `sql query` returning empty/stale rows immediately after a write is often an index lag issue, not a missing document. Run `sql flush --json`, then retry the query once.
 - repeated `VALIDATION_FILE_READ_FAILED` on generated multiline input files usually means the agent kept retrying the same unreachable temp path pattern. Stop retrying `/tmp` or `$TMPDIR` variants and move the file into the current working directory instead.
 - `export resources` failing on a document that has no asset refs is not a transport error. Check whether the source document actually contains asset links.
-- `file.get`, `file.list`, or `file.remove` failures on scope usually mean the agent used a non-managed scope. Allowed scopes are `cache`, `export`, and `report`.
+- `file.get`, `file.list`, or `file.remove` failures on scope usually mean the agent used a non-managed scope. Allowed scopes are `cache`, `export`, and `report`. Managed files live under `~/.cache/sy-cli/...`, not the SiYuan workspace `data/` tree.
+- `av filter-sort` requires `--block-id` as well as `--id`; omitting it is a validation/API contract error, not a connectivity problem.
+- `av search` takes `--keyword` for global database discovery. Row filtering inside one AV uses `av render --query`.
 - `av set-cell` failures often come from a mismatched `key-id`, `item-id`, or wrong `--value-type` for the destination column.
+- `ref backlinks` must not use the removed `--before-len` flag; use `--sort` / `--mention-sort` when sort control is needed.
 - `npm run dev -- ...` failures from outside the repo usually mean the agent used the repo-local fallback from the wrong working directory.
 
 ## When to stop and ask the user

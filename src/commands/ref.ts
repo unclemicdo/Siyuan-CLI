@@ -8,7 +8,8 @@ export interface RefApi {
     id: string;
     k: string;
     mk: string;
-    beforeLen: number;
+    sort?: string;
+    mSort?: string;
     containChildren?: boolean;
   }) => Promise<unknown>;
   docBacklinks: (input: {
@@ -58,7 +59,8 @@ export function registerRefCommands(program: Command, deps: RefCommandDeps): voi
     .requiredOption("--id <id>")
     .option("--keyword <text>", "", "")
     .option("--mention-keyword <text>", "", "")
-    .option("--before-len <count>", "context length", "12")
+    .option("--sort <mode>", "backlink sort mode")
+    .option("--mention-sort <mode>", "backmention sort mode")
     .option("--contain-children")
     .option("--json")
     .action(
@@ -66,7 +68,8 @@ export function registerRefCommands(program: Command, deps: RefCommandDeps): voi
         id: string;
         keyword: string;
         mentionKeyword: string;
-        beforeLen: string;
+        sort?: string;
+        mentionSort?: string;
         containChildren?: boolean;
         json?: boolean;
       }) => {
@@ -78,7 +81,17 @@ export function registerRefCommands(program: Command, deps: RefCommandDeps): voi
               id: options.id,
               k: options.keyword,
               mk: options.mentionKeyword,
-              beforeLen: parseRequiredNumber(options.beforeLen, "--before-len"),
+              ...(options.sort !== undefined
+                ? { sort: parseRequiredSortMode(options.sort, "--sort") }
+                : {}),
+              ...(options.mentionSort !== undefined
+                ? {
+                    mSort: parseRequiredSortMode(
+                      options.mentionSort,
+                      "--mention-sort"
+                    )
+                  }
+                : {}),
               ...(options.containChildren ? { containChildren: true } : {})
             }),
           write: deps.write
@@ -180,16 +193,17 @@ export function registerRefCommands(program: Command, deps: RefCommandDeps): voi
     );
 }
 
-function parseRequiredNumber(raw: string, optionName: string): number {
-  const value = Number(raw);
-  if (!Number.isFinite(value)) {
+function parseRequiredSortMode(raw: string, optionName: string): string {
+  const trimmed = raw.trim();
+  // SiYuan getBacklink2 contracts sort/mSort as JSON strings, then atoi's them.
+  if (!/^-?\d+$/.test(trimmed)) {
     throw new SiyuanCliError(
       "VALIDATION_INVALID_NUMBER",
-      `${optionName} must be a valid number`
+      `${optionName} must be an integer sort mode`
     );
   }
 
-  return value;
+  return trimmed;
 }
 
 async function executeCommand(input: {

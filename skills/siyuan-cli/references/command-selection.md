@@ -25,13 +25,14 @@
 | Update known block id | `block update` | Use when the target block id is already known. Prefer stdin heredoc; fall back to `--data-file`. |
 | Prepend / insert around known block | `block prepend`, `block insert-before`, `block insert-after` | All support stdin heredoc and `--data-file`. |
 | Perform many block operations | `workflow block-batch` | Prefer when the user wants batched structured results. |
-| Read or mutate an AV / database table | `av ...` | Use `av keys`, `views`, `render`, `set-cell`, and schema commands. Do not use SQL writes as a substitute. |
-| Render an official SiYuan template file | `template render` | Requires `--id` plus a workspace absolute filesystem `--path` to the `.sy` file. No CLI variable injection. |
+| Read or mutate an AV / database table | `av ...` | Use `av keys`, `views`, `render`, `set-cell`, and schema commands. Do not use SQL writes as a substitute. Discover DBs with `av search --keyword`; filter rows with `av render --query`; read saved filters with `av filter-sort --id --block-id`. |
+| Render an official SiYuan template file | `template render` | Requires `--id` plus a workspace absolute filesystem `--path`. Use `--mode preview\|editorInsert`; optional `--http-confirm-token` for editor-insert handoff. Legacy `--preview` remains. No CLI variable injection. |
 | Render a raw sprig template string or file | `template render-sprig` | Accepts stdin heredoc or `--template-file`. `--var` and `--vars` are rejected. |
+| Make SQL observe recent block writes | `sql flush` | Call after mutations and before `sql query` when the query must see those writes. |
 | Upload a local file into SiYuan assets | `asset upload` | Use for asset ingestion, then reference the returned asset path in later note writes if needed. |
-| Save or read temporary agent artifacts safely | `file ...` | Use only managed scopes: `put-cache`, `put-export`, `put-report`, `get`, `list`, `remove`, `stage-put`, `stage-get`. Not general filesystem access. |
+| Save or read temporary agent artifacts safely | `file ...` | Use only managed scopes: `put-cache`, `put-export`, `put-report`, `get`, `list`, `remove`, `stage-put`, `stage-get`. Files land under `~/.cache/sy-cli/...` and `$TMPDIR/sy-cli/staging`, not arbitrary paths. |
 | Export assets referenced by a document tree | `export resources` | Accepts a document or block `--id`, resolves the root document, and exports only referenced assets. |
-| Read-only analysis over note data | `sql query` | Keep queries read-only. |
+| Read-only analysis over note data | `sql query` | Keep queries read-only. After recent writes, prefer `sql flush` first. |
 | Tags, backlinks, graph, or ref transfer | See `knowledge-management.md` | Use the dedicated knowledge-management reference for command choice and examples. |
 | Produce structured report output from SQL | `workflow sql-report` | Prefer when rows need downstream summarization. |
 | Interactive exploration | `repl` | Prefer only for human-guided exploration, not normal automation. |

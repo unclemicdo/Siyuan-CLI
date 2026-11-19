@@ -416,10 +416,16 @@ describe("doc commands", () => {
     process.env.SIYUAN_TOKEN = "test-token";
     process.env.SIYUAN_BASE_URL = "http://127.0.0.1:6806";
 
-    const querySql = vi
-      .spyOn(SiyuanClient.prototype, "querySql")
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ id: "doc-1" }]);
+    const listNotebooks = vi
+      .spyOn(SiyuanClient.prototype, "listNotebooks")
+      .mockResolvedValue({
+        notebooks: [{ id: "nb-1", name: "Notebook" }]
+      });
+    const getIDsByHPath = vi
+      .spyOn(SiyuanClient.prototype, "getIDsByHPath")
+      .mockResolvedValue(["doc-1"]);
+    const resolveDocPath = vi.spyOn(SiyuanClient.prototype, "resolveDocPath");
+    const querySql = vi.spyOn(SiyuanClient.prototype, "querySql");
 
     const cli = createCli();
     cli.exitOverride();
@@ -434,14 +440,13 @@ describe("doc commands", () => {
       "--json"
     ]);
 
-    expect(querySql).toHaveBeenNthCalledWith(
-      1,
-      "SELECT id FROM blocks WHERE type = 'd' AND hpath = '/Notebook/Projects/Doc' ORDER BY updated DESC LIMIT 1"
-    );
-    expect(querySql).toHaveBeenNthCalledWith(
-      2,
-      "SELECT id FROM blocks WHERE type = 'd' AND hpath = '/Projects/Doc' ORDER BY updated DESC LIMIT 1"
-    );
+    expect(listNotebooks).toHaveBeenCalledTimes(1);
+    expect(getIDsByHPath).toHaveBeenCalledWith({
+      notebook: "nb-1",
+      path: "/Projects/Doc"
+    });
+    expect(resolveDocPath).not.toHaveBeenCalled();
+    expect(querySql).not.toHaveBeenCalled();
 
     const output = write.mock.calls.map(([value]) => String(value)).join("");
     const payload = JSON.parse(output);

@@ -99,12 +99,14 @@ sy repl
 
 ### SiYuan 版本相容性
 
-CLI 以穩定的 SiYuan API 為目標，支援 SiYuan 3.6.5 及之後版本（含 3.8.1）。3.8.1 中兩項 AV 行為有變，CLI 已相容：
+CLI 以穩定的 SiYuan API 為目標，支援 SiYuan 3.6.5 及之後版本（含 3.8.x）。已知契約適配：
 
-- `av set-cell` 傳送 `itemID`（`--item-id` 參數）；SiYuan 3.8.1 會拒絕舊的 `rowID` 請求欄位。
-- `av update-key` 改經 `/api/transactions`（`updateAttrViewCol` / `setAttrViewColIcon`）更新欄位，不再呼叫從未註冊的 `/api/av/updateAttributeViewKey` 路由。
-
-針對 3.8.1 API 契約的 CLI 修正：`doc create` 一律傳送明確的 `markdown` 欄位（缺少該鍵時 SiYuan 3.8.1 會回傳 `data: null` 且不建立文件）；`av add-detached-rows` 依官方 `addAttributeViewBlocks` 契約傳送 `itemID`（`--row-ids` 值）及可選的 `--content` 主鍵文字。
+- `av set-cell` 傳送 `itemID`（`--item-id`）；SiYuan 3.8.1+ 會拒絕舊的 `rowID`。
+- `av update-key` 經 `/api/transactions`（`updateAttrViewCol` / `setAttrViewColIcon`）更新欄位。
+- `ref backlinks` 呼叫 `/api/ref/getBacklink2`（舊 `/api/ref/getBacklink` 已移除）。
+- `av primary-values` / `av search` / `av relation-keys` / `av filter-sort` 對齊對應公開 AV 端點。
+- `doc create` 一律傳送明確 `markdown`；`av add-detached-rows` 傳送 `itemID` 及可選 `--content`。
+- 託管 `file` 產物寫入 `~/.cache/sy-cli/...`（或 `$XDG_CACHE_HOME/sy-cli/...`），不再使用依賴 CWD 的 `data/.sy-cli/...`。
 
 ## 安裝
 

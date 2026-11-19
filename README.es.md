@@ -99,12 +99,14 @@ sy repl
 
 ### Compatibilidad de versiones de SiYuan
 
-La CLI está orientada a la API estable de SiYuan y funciona con SiYuan 3.6.5 y posteriores, incluida 3.8.1. Dos comportamientos de AV cambiaron en 3.8.1 y ya están manejados por la CLI:
+La CLI está orientada a la API estable de SiYuan y funciona con SiYuan 3.6.5 y posteriores, incluida 3.8.x. Adaptaciones conocidas:
 
-- `av set-cell` envía `itemID` (la bandera `--item-id`); SiYuan 3.8.1 rechaza el campo de solicitud heredado `rowID`.
-- `av update-key` actualiza campos a través de `/api/transactions` (`updateAttrViewCol` / `setAttrViewColIcon`) en lugar de la ruta nunca registrada `/api/av/updateAttributeViewKey`.
-
-Correcciones de la CLI para el contrato de API de 3.8.1: `doc create` siempre envía un campo `markdown` explícito (si falta la clave, SiYuan 3.8.1 devuelve `data: null` sin crear el documento), y `av add-detached-rows` envía `itemID` (los valores de `--row-ids`) más un texto de clave principal opcional `--content` según el contrato oficial de `addAttributeViewBlocks`.
+- `av set-cell` envía `itemID` (`--item-id`); SiYuan 3.8.1+ rechaza el legado `rowID`.
+- `av update-key` usa `/api/transactions` (`updateAttrViewCol` / `setAttrViewColIcon`).
+- `ref backlinks` llama a `/api/ref/getBacklink2` (se eliminó `/api/ref/getBacklink`).
+- `av primary-values` / `av search` / `av relation-keys` / `av filter-sort` se alinean con los endpoints públicos de AV.
+- `doc create` siempre envía `markdown` explícito; `av add-detached-rows` envía `itemID` y `--content` opcional.
+- Los artefactos `file` gestionados van a `~/.cache/sy-cli/...` (o `$XDG_CACHE_HOME/sy-cli/...`), no a `data/.sy-cli/...` relativo al CWD.
 
 ## Instalación
 

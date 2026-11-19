@@ -15,20 +15,22 @@ export interface AvApi {
     page?: number;
     pageSize?: number;
     groupPaging?: Record<string, unknown>;
-    config?: Record<string, unknown>;
     createIfNotExist?: boolean;
   }) => Promise<unknown>;
   keys: (id: string) => Promise<unknown>;
-  primaryValues: (id: string) => Promise<unknown>;
-  search: (input: {
+  primaryValues: (input: {
     id: string;
-    query: string;
+    keyword?: string;
     page?: number;
     pageSize?: number;
-    groupPaging?: Record<string, unknown>;
   }) => Promise<unknown>;
-  relationKeys: (id: string) => Promise<unknown>;
-  filterSort: (input: { id: string; viewID?: string }) => Promise<unknown>;
+  search: (input: {
+    keyword: string;
+    excludes?: string[];
+    includeViewMatches?: boolean;
+  }) => Promise<unknown>;
+  relationKeys: (input: { avID: string; keyword: string }) => Promise<unknown>;
+  filterSort: (input: { id: string; blockID: string }) => Promise<unknown>;
   views: (id: string) => Promise<unknown>;
   setCell: (input: {
     avID: string;
@@ -89,7 +91,6 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
     .option("--page <number>")
     .option("--page-size <number>")
     .option("--group-paging <json>")
-    .option("--config <json>")
     .option("--create-if-not-exist")
     .option("--json")
     .action(
@@ -101,7 +102,6 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
         page?: string;
         pageSize?: string;
         groupPaging?: string;
-        config?: string;
         createIfNotExist?: boolean;
         json?: boolean;
       }) => {
@@ -120,7 +120,6 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
                 options.groupPaging,
                 "--group-paging"
               ),
-              config: parseOptionalJsonObject(options.config, "--config"),
               createIfNotExist: options.createIfNotExist
             }),
           write: deps.write
@@ -134,27 +133,47 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
     action: (id) => deps.avApi.keys(id)
   });
 
-  registerIdReadCommand(av, deps, {
-    name: "primary-values",
-    command: "av.primary-values",
-    action: (id) => deps.avApi.primaryValues(id)
-  });
-
   av
-    .command("search")
+    .command("primary-values")
     .requiredOption("--id <id>")
-    .requiredOption("--query <text>")
+    .option("--keyword <text>")
     .option("--page <number>")
     .option("--page-size <number>")
-    .option("--group-paging <json>")
     .option("--json")
     .action(
       async (options: {
         id: string;
-        query: string;
+        keyword?: string;
         page?: string;
         pageSize?: string;
-        groupPaging?: string;
+        json?: boolean;
+      }) => {
+        await executeCommand({
+          command: "av.primary-values",
+          json: options.json,
+          action: () =>
+            deps.avApi.primaryValues({
+              id: options.id,
+              keyword: options.keyword,
+              page: parseOptionalNumber(options.page, "--page"),
+              pageSize: parseOptionalNumber(options.pageSize, "--page-size")
+            }),
+          write: deps.write
+        });
+      }
+    );
+
+  av
+    .command("search")
+    .requiredOption("--keyword <text>")
+    .option("--excludes <ids>")
+    .option("--include-view-matches")
+    .option("--json")
+    .action(
+      async (options: {
+        keyword: string;
+        excludes?: string;
+        includeViewMatches?: boolean;
         json?: boolean;
       }) => {
         await executeCommand({
@@ -162,40 +181,49 @@ export function registerAvCommands(program: Command, deps: AvCommandDeps): void 
           json: options.json,
           action: () =>
             deps.avApi.search({
-              id: options.id,
-              query: options.query,
-              page: parseOptionalNumber(options.page, "--page"),
-              pageSize: parseOptionalNumber(options.pageSize, "--page-size"),
-              groupPaging: parseOptionalJsonObject(
-                options.groupPaging,
-                "--group-paging"
-              )
+              keyword: options.keyword,
+              excludes: parseOptionalCsvIds(options.excludes),
+              includeViewMatches: options.includeViewMatches
             }),
           write: deps.write
         });
       }
     );
 
-  registerIdReadCommand(av, deps, {
-    name: "relation-keys",
-    command: "av.relation-keys",
-    action: (id) => deps.avApi.relationKeys(id)
-  });
+  av
+    .command("relation-keys")
+    .requiredOption("--id <id>")
+    .option("--keyword <text>", "", "")
+    .option("--json")
+    .action(
+      async (options: { id: string; keyword: string; json?: boolean }) => {
+        await executeCommand({
+          command: "av.relation-keys",
+          json: options.json,
+          action: () =>
+            deps.avApi.relationKeys({
+              avID: options.id,
+              keyword: options.keyword
+            }),
+          write: deps.write
+        });
+      }
+    );
 
   av
     .command("filter-sort")
     .requiredOption("--id <id>")
-    .option("--view-id <id>")
+    .requiredOption("--block-id <id>")
     .option("--json")
     .action(
-      async (options: { id: string; viewId?: string; json?: boolean }) => {
+      async (options: { id: string; blockId: string; json?: boolean }) => {
         await executeCommand({
           command: "av.filter-sort",
           json: options.json,
           action: () =>
             deps.avApi.filterSort({
               id: options.id,
-              viewID: options.viewId
+              blockID: options.blockId
             }),
           write: deps.write
         });
@@ -496,6 +524,18 @@ function parseOptionalNumber(
   }
 
   return value;
+}
+
+function parseOptionalCsvIds(raw: string | undefined): string[] | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+
+  const ids = raw
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return ids.length > 0 ? ids : [];
 }
 
 function parseOptionalJsonObject(

@@ -150,10 +150,10 @@ sy file stage-get --name temp-input.md --json
 
 Managed locations:
 
-- `put-cache` -> `data/.sy-cli/cache/...`
-- `put-export` -> `data/.sy-cli/exports/...`
-- `put-report` -> `data/.sy-cli/reports/...`
-- `stage-put` -> `/tmp/sy-cli/staging/...`
+- `put-cache` -> `~/.cache/sy-cli/cache/...` (or `$XDG_CACHE_HOME/sy-cli/cache/...`)
+- `put-export` -> `~/.cache/sy-cli/exports/...`
+- `put-report` -> `~/.cache/sy-cli/reports/...`
+- `stage-put` -> `$TMPDIR/sy-cli/staging/...`
 
 ## Upload an asset
 
