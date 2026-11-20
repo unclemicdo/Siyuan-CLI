@@ -17,7 +17,7 @@ describe("bootstrap", () => {
     };
 
     expect(packageJson.bin?.sy).toBe("dist/index.js");
-    expect(packageJson.files).toEqual(["dist"]);
+    expect(packageJson.files).toEqual(["dist", "skills", "scripts/install-skill.mjs"]);
     expect(packageJson.engines?.node).toBe(">=22.10.0");
   });
 

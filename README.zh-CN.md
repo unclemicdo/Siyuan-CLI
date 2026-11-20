@@ -128,30 +128,33 @@ sy system version --json
 
 ## Agent Skill
 
-这个仓库还内置了一个随版本一起维护的 `siyuan-cli` skill，可用于 Codex 和 Claude Code。
+npm 包内置了一个随版本一起维护的 `siyuan-cli` skill，可用于 Claude Code 和 Codex；本仓库的 `skills/siyuan-cli/` 是它的唯一事实来源。
 
-共享源目录：
-
-- `skills/siyuan-cli/`
-
-全局安装：
-
-- 将 `skills/siyuan-cli/` 视为唯一事实来源
-- 在本地开发环境中，优先把全局 skill 安装为指向这个目录的软链接
-- 显式指定目标 skill 根目录，例如 `~/.codex/skills` 或 `~/.claude/skills`
-- 如果机器上不适合使用软链接，也可以改用复制模式
-
-安装或刷新全局 skill：
+npm 全局安装后（`npm install -g @unclemicdo/siyuan-cli`），可在任意目录安装全局 skill：
 
 ```bash
-npm run skill:install -- --target-dir ~/.codex/skills --force
+sy skill install --target-dir ~/.codex/skills
 ```
+
+也可以通过 skills.sh 安装：
+
+```bash
+npx skills add unclemicdo/Siyuan-CLI --skill siyuan-cli
+```
+
+不传 `--target-dir` 时：优先使用已存在的 `~/.claude/skills`，其次已存在的 `~/.codex/skills`，两者都不存在则创建 `~/.claude/skills`。
 
 常见变体：
 
 ```bash
-npm run skill:install -- --mode copy --target-dir ~/.codex/skills --force
-npm run skill:install -- --target-dir ~/.claude/skills --force
+sy skill install --mode copy --target-dir ~/.codex/skills --force
+sy skill install --target-dir ~/.claude/skills --force
+```
+
+仓库开发者本地开发时，优先把全局 skill 安装为指向本目录（唯一事实来源）的软链接：
+
+```bash
+npm run skill:install -- --target-dir ~/.codex/skills --force
 ```
 
 使用方式：

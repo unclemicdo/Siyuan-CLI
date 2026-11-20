@@ -126,30 +126,33 @@ sy system version --json
 
 ## 에이전트 스킬
 
-이 저장소에는 Codex 와 Claude Code 에서 사용할 수 있는 버전 관리형 `siyuan-cli` 스킬도 함께 들어 있습니다.
+npm 패키지에는 Claude Code 와 Codex 에서 사용할 수 있는 버전 관리형 `siyuan-cli` 스킬이 함께 들어 있으며, 이 저장소의 `skills/siyuan-cli/` 가 단일 원본입니다.
 
-공용 원본 디렉터리:
-
-- `skills/siyuan-cli/`
-
-전역 설치:
-
-- `skills/siyuan-cli/` 를 단일 원본으로 취급하세요
-- 로컬 개발 환경에서는 전역 스킬을 이 디렉터리를 가리키는 심볼릭 링크로 설치하는 방식을 우선 권장합니다
-- `~/.codex/skills` 또는 `~/.claude/skills` 같은 대상 skill 루트를 명시적으로 지정하세요
-- 심볼릭 링크가 적합하지 않은 머신에서는 복사 모드도 사용할 수 있습니다
-
-전역 스킬 설치 또는 갱신:
+`npm install -g @unclemicdo/siyuan-cli` 로 전역 설치한 뒤에는 임의 디렉터리에서 전역 스킬을 설치할 수 있습니다:
 
 ```bash
-npm run skill:install -- --target-dir ~/.codex/skills --force
+sy skill install --target-dir ~/.codex/skills
 ```
+
+skills.sh 를 통한 설치도 가능합니다:
+
+```bash
+npx skills add unclemicdo/Siyuan-CLI --skill siyuan-cli
+```
+
+`--target-dir` 을 지정하지 않으면 `~/.claude/skills` 가 존재하면 그것을, 없으면 `~/.codex/skills` 가 존재할 때 그것을, 둘 다 없으면 `~/.claude/skills` 를 만듭니다.
 
 유용한 변형:
 
 ```bash
-npm run skill:install -- --mode copy --target-dir ~/.codex/skills --force
-npm run skill:install -- --target-dir ~/.claude/skills --force
+sy skill install --mode copy --target-dir ~/.codex/skills --force
+sy skill install --target-dir ~/.claude/skills --force
+```
+
+저장소 기여자는 로컬 개발 시 전역 스킬을 이 디렉터리(단일 원본)를 가리키는 심볼릭 링크로 설치하는 방식을 우선 권장합니다:
+
+```bash
+npm run skill:install -- --target-dir ~/.codex/skills --force
 ```
 
 사용:

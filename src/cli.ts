@@ -72,6 +72,10 @@ import {
   type ExportApi,
   type ExportCommandDeps
 } from "./commands/export.js";
+import {
+  registerSkillCommands,
+  type SkillCommandDeps
+} from "./commands/skill.js";
 import { createReplState, startRepl } from "./repl/repl.js";
 import {
   registerSystemCommands,
@@ -89,6 +93,7 @@ import { SiyuanCliError } from "./core/errors.js";
 
 export interface CliDeps
   extends SystemCommandDeps,
+    SkillCommandDeps,
     NotebookCommandDeps,
     SqlCommandDeps,
     DocCommandDeps,
@@ -159,6 +164,7 @@ export function createCli(input: CliDepsInput = {}): Command {
   registerAssetCommands(program, deps);
   registerPathCommands(program, deps);
   registerExportCommands(program, deps);
+  registerSkillCommands(program, deps);
 
   program
     .command("repl")

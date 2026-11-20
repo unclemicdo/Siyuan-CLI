@@ -123,30 +123,33 @@ The `sy` command requires Node.js `>=22.10.0` and a configured SiYuan token/base
 
 ## Agent Skill
 
-This repository also ships a versioned `siyuan-cli` skill for Codex and Claude Code.
+The npm package ships a versioned `siyuan-cli` skill for Claude Code and Codex. The canonical source lives at `skills/siyuan-cli/` in this repository.
 
-Canonical source:
-
-- `skills/siyuan-cli/`
-
-Global install:
-
-- treat `skills/siyuan-cli/` as the single source of truth
-- during local development, prefer installing the global skill as a symlink back to this directory
-- choose an explicit target skill root such as `~/.codex/skills` or `~/.claude/skills`
-- optional copy mode is available for machines where symlinks are not desirable
-
-Install or refresh the global skill:
+After `npm install -g @unclemicdo/siyuan-cli`, install the global skill from any directory:
 
 ```bash
-npm run skill:install -- --target-dir ~/.codex/skills --force
+sy skill install --target-dir ~/.codex/skills
 ```
+
+Or install through skills.sh:
+
+```bash
+npx skills add unclemicdo/Siyuan-CLI --skill siyuan-cli
+```
+
+Without `--target-dir`, the installer picks `~/.claude/skills` if it exists, else `~/.codex/skills` if it exists, else creates `~/.claude/skills`.
 
 Useful variants:
 
 ```bash
-npm run skill:install -- --mode copy --target-dir ~/.codex/skills --force
-npm run skill:install -- --target-dir ~/.claude/skills --force
+sy skill install --mode copy --target-dir ~/.codex/skills --force
+sy skill install --target-dir ~/.claude/skills --force
+```
+
+For repository contributors, prefer a symlink back to `skills/siyuan-cli/` (the single source of truth) during local development:
+
+```bash
+npm run skill:install -- --target-dir ~/.codex/skills --force
 ```
 
 Usage:
